@@ -15,6 +15,18 @@ function exportPNG() {
     return;
   }
   
+  // Hỏi người dùng chọn màu nền
+  const bgColor = prompt('Chọn màu nền cho ảnh xuất:\n\nNhập:\n- "white" hoặc "trắng" → nền trắng (mặc định)\n- "black" hoặc "đen" → nền đen', 'white');
+  
+  if (bgColor === null) {
+    return; // Người dùng hủy
+  }
+  
+  let backgroundColor = '#ffffff';
+  if (bgColor.toLowerCase() === 'black' || bgColor.toLowerCase() === 'đen') {
+    backgroundColor = '#000000';
+  }
+  
   // Hiển thị thông báo đang xử lý
   const btn = document.getElementById('btn-export-png');
   const originalText = btn.textContent;
@@ -23,7 +35,7 @@ function exportPNG() {
   
   // Cấu hình html2canvas
   const options = {
-    backgroundColor: '#ffffff',
+    backgroundColor: backgroundColor,
     scale: 2,
     logging: false,
     useCORS: true,
@@ -38,7 +50,8 @@ function exportPNG() {
     // Đặt tên file với timestamp
     const now = new Date();
     const timestamp = now.toISOString().slice(0, 19).replace(/[-:]/g, '');
-    link.download = `Stockfitting_Dashboard_${timestamp}.png`;
+    const bgSuffix = backgroundColor === '#000000' ? '_black' : '_white';
+    link.download = `Stockfitting_Dashboard_${timestamp}${bgSuffix}.png`;
     
     // Download
     document.body.appendChild(link);

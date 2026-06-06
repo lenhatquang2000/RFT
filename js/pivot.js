@@ -71,6 +71,14 @@ function handlePivotFileUpload(file) {
         return cleanRow;
       });
 
+      // Lọc bỏ dòng không hợp lệ (không có Model hoặc Kiểm Tra = 0)
+      pivotRawData = pivotRawData.filter(row => {
+        return row['Model'] && 
+               row['Model'].trim() !== '' && 
+               row['Model'] !== 'Model Name' && // Bỏ header
+               row['Kiểm Tra'] > 0;
+      });
+
       // Hiển thị file info
       document.getElementById('pivot-file-info').innerHTML = `
         <div style="color: #10b981; font-weight: 500;">
@@ -128,7 +136,11 @@ function generateTopModelsAnalysis() {
   const modelDefects = {};
 
   pivotRawData.forEach(row => {
-    const model = row['Model'] || 'Unknown';
+    const model = row['Model'] || '';
+    
+    // Bỏ qua nếu không có tên model hợp lệ
+    if (!model || model.trim() === '' || model === 'Model Name') return;
+    
     const kiemTra = row['Kiểm Tra'] || 0;
     const loi = row['Lỗi'] || 0;
 
@@ -247,7 +259,11 @@ function generateDataVerification() {
   const modelData = {};
 
   pivotRawData.forEach(row => {
-    const model = row['Model'] || 'Unknown';
+    const model = row['Model'] || '';
+    
+    // Bỏ qua nếu không có tên model hợp lệ
+    if (!model || model.trim() === '' || model === 'Model Name') return;
+    
     const kiemTra = row['Kiểm Tra'] || 0;
     const loi = row['Lỗi'] || 0;
     const dat = row['Đạt'] || 0;

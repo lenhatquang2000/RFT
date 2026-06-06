@@ -111,6 +111,7 @@ function readFile1(file) {
       compareFiles();
     } catch (err) {
       ulog1('❌ Lỗi đọc file: ' + err.message);
+      Swal.fire('❌ Lỗi', 'Lỗi đọc file: ' + err.message, 'error');
     }
   };
   reader.readAsBinaryString(file);
@@ -140,6 +141,7 @@ function readFile2(file) {
       
       if (headerIdx === -1) {
         ulog2('❌ Không tìm thấy header LEAN trong file');
+        Swal.fire('❌ Lỗi', 'Không tìm thấy header LEAN trong file', 'error');
         return;
       }
       
@@ -223,6 +225,7 @@ function readFile2(file) {
       compareFiles();
     } catch (err) {
       ulog2('❌ Lỗi đọc file: ' + err.message);
+      Swal.fire('❌ Lỗi', 'Lỗi đọc file: ' + err.message, 'error');
     }
   };
   reader.readAsBinaryString(file);
@@ -366,7 +369,7 @@ function addRow() {
   const msg = document.getElementById('add-msg');
 
   if (!lean || !model || !qty) {
-    msg.innerHTML = '<span style="color:#FF7070">Vui lòng nhập Line, Model và SL Kiểm</span>';
+    Swal.fire('⚠️ Cảnh báo', 'Vui lòng nhập Line, Model và SL Kiểm', 'warning');
     return;
   }
 

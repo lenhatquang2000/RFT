@@ -6,25 +6,13 @@ function exportPNG() {
   const element = document.getElementById('dash-content');
   
   if (!element) {
-    alert('❌ Không tìm thấy nội dung dashboard để xuất.');
+    Swal.fire('❌ Lỗi', 'Không tìm thấy nội dung dashboard để xuất.', 'error');
     return;
   }
   
   if (element.style.display === 'none') {
-    alert('❌ Dashboard chưa được tải. Vui lòng upload dữ liệu trước.');
+    Swal.fire('❌ Lỗi', 'Dashboard chưa được tải. Vui lòng upload dữ liệu trước.', 'error');
     return;
-  }
-  
-  // Hỏi người dùng chọn màu nền
-  const bgColor = prompt('Chọn màu nền cho ảnh xuất:\n\nNhập:\n- "white" hoặc "trắng" → nền trắng (mặc định)\n- "black" hoặc "đen" → nền đen', 'white');
-  
-  if (bgColor === null) {
-    return; // Người dùng hủy
-  }
-  
-  let backgroundColor = '#ffffff';
-  if (bgColor.toLowerCase() === 'black' || bgColor.toLowerCase() === 'đen') {
-    backgroundColor = '#000000';
   }
   
   // Hiển thị thông báo đang xử lý
@@ -33,9 +21,9 @@ function exportPNG() {
   btn.textContent = '⏳ Đang xử lý...';
   btn.disabled = true;
   
-  // Cấu hình html2canvas
+  // Cấu hình html2canvas với nền đen
   const options = {
-    backgroundColor: backgroundColor,
+    backgroundColor: '#000000',
     scale: 2,
     logging: false,
     useCORS: true,
@@ -50,8 +38,7 @@ function exportPNG() {
     // Đặt tên file với timestamp
     const now = new Date();
     const timestamp = now.toISOString().slice(0, 19).replace(/[-:]/g, '');
-    const bgSuffix = backgroundColor === '#000000' ? '_black' : '_white';
-    link.download = `Stockfitting_Dashboard_${timestamp}${bgSuffix}.png`;
+    link.download = `Stockfitting_Dashboard_${timestamp}.png`;
     
     // Download
     document.body.appendChild(link);
@@ -64,18 +51,18 @@ function exportPNG() {
     
     // Thông báo thành công
     setTimeout(() => {
-      alert('✅ Xuất PNG thành công!');
+      Swal.fire('✅ Thành công', 'Xuất PNG thành công!', 'success');
     }, 500);
   }).catch(error => {
     console.error('Lỗi khi xuất PNG:', error);
     btn.textContent = originalText;
     btn.disabled = false;
-    alert('❌ Lỗi khi xuất PNG. Vui lòng thử lại.');
+    Swal.fire('❌ Lỗi', 'Lỗi khi xuất PNG. Vui lòng thử lại.', 'error');
   });
 }
 
 function doExportPPT() {
-  alert('Export PPT: Chức năng đang được phát triển...\nVui lòng sử dụng file stockfitting_quality_ver_6.html để xuất PNG/PPT đầy đủ.');
+  Swal.fire('⏳ Phát triển', 'Export PPT: Chức năng đang được phát triển...\nVui lòng sử dụng file stockfitting_quality_ver_6.html để xuất PNG/PPT đầy đủ.', 'info');
 }
 
 function buildInfographic(s) {

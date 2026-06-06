@@ -189,3 +189,130 @@ table.dt tr:hover td{background:rgba(255,255,255,.025);}
 #infographic{position:absolute;left:-9999px;top:0;width:860px;}
 
 @media(max-width:1000px){.kpi-row{grid-template-columns:repeat(3,1fr);}.grid2,.grid3{grid-template-columns:1fr;}.conc-grid{grid-template-columns:1fr 1fr;}}
+
+/* ═══════════════════════════════════════ */
+/* PIVOT TABLE STYLES */
+/* ═══════════════════════════════════════ */
+
+/* Pivot Table Container */
+#pivot-table-ui {
+  overflow-x: auto;
+  background: var(--bg2);
+  border-radius: 6px;
+  border: 1px solid var(--bd);
+}
+
+/* Pivot Table Main */
+.pvtTable {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 12px;
+  background: var(--bg2);
+}
+
+/* Pivot Table Headers */
+.pvtTable th {
+  background: var(--bg3) !important;
+  color: var(--tx) !important;
+  border: 1px solid var(--bd) !important;
+  padding: 8px 10px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+}
+
+/* Pivot Table Data Cells */
+.pvtTable td {
+  border: 1px solid var(--bd) !important;
+  padding: 8px 10px !important;
+  text-align: center !important;
+  background: var(--bg2) !important;
+  color: var(--tx) !important;
+}
+
+/* Pivot Row Headers */
+.pvtTable .pvtRowHeader {
+  background: var(--bg3) !important;
+  color: var(--tx) !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+}
+
+/* Pivot Column Headers */
+.pvtTable .pvtColHeader {
+  background: var(--bg3) !important;
+  color: var(--tx) !important;
+  font-weight: 600 !important;
+}
+
+/* Pivot Grand Total */
+.pvtTable .pvtGrandTotal {
+  background: rgba(0, 196, 90, 0.15) !important;
+  font-weight: 700 !important;
+  color: var(--green) !important;
+}
+
+/* Pivot Value Cell */
+.pvtTable .pvtVal {
+  color: var(--tx2) !important;
+  background: var(--bg2) !important;
+}
+
+/* Pivot Axis Label */
+.pvtTable .pvtAxisContainer .pvtLabel {
+  background: var(--bg3) !important;
+  color: var(--tx) !important;
+  border-right: 1px solid var(--bd) !important;
+}
+
+/* Pivot Row Labeling Area */
+.pvtTable .pvtRowLabels {
+  background: var(--bg3) !important;
+  border-right: 1px solid var(--bd) !important;
+}
+
+/* Pivot UI Controls */
+.pvtFilterBox {
+  display: none;
+}
+
+.pvtVals,
+.pvtRows,
+.pvtCols {
+  background: var(--bg3) !important;
+  border: 1px solid var(--bd) !important;
+  border-radius: 6px !important;
+  padding: 8px !important;
+}
+
+.pvtVals h4,
+.pvtRows h4,
+.pvtCols h4 {
+  color: var(--tx) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+}
+
+.pvtAxis {
+  color: var(--tx2) !important;
+  font-size: 11px !important;
+}
+
+/* Upload Section Styles */
+#pivot-upload-section {
+  background: var(--bg3) !important;
+  border: 2px dashed var(--bd2) !important;
+}
+
+#pivot-upload-section h3 {
+  color: var(--tx) !important;
+}
+
+#pivot-upload-section p {
+  color: var(--tx2) !important;
+}
+
+#pivot-file-info {
+  color: var(--tx2) !important;
+}

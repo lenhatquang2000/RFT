@@ -113,16 +113,20 @@ function createIndependentPivotTable() {
   const elem = document.getElementById('pivot-table-ui');
   elem.innerHTML = '';
 
-  // Tạo pivot table
+  // Tạo pivot table với cấu hình dễ hiểu hơn
   $(elem).pivot(pivotRawData, {
-    rows: ['Ngày', 'Model'],
-    cols: ['Vật Liệu'],
-    vals: ['Kiểm Tra', 'Lỗi'],
+    rows: ['Ngày'],
+    cols: ['Model'],
+    vals: ['Kiểm Tra'],
     aggregatorName: 'Sum',
-    rendererName: 'Table',
+    rendererName: 'Table Heatmap',
     sorters: {
       'Ngày': $.pivotUtilities.sortAs
-    }
+    },
+    renderers: $.extend(
+      $.pivotUtilities.renderers,
+      $.pivotUtilities.plotly_renderers
+    )
   });
 
   // Thêm phân tích Top Models & Defects

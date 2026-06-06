@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stockfitting Quality Status</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">SF</div>
+  <div class="title-block">
+    <b>STOCKFITTING QUALITY STATUS</b>
+    <small>质量绩效仪表板 / Bảng kết quả chất lượng gia công đế ngoài</small>
+  </div>
+  <div class="actions">
+    <label class="btn bg" style="cursor:pointer;display:inline-flex;" id="btn-upload-excel">
+      <i class="fas fa-folder"></i> Upload Excel
+      <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+    </label>
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="lang-vi" onclick="setLang('vi')"><i class="fas fa-language"></i> VI</button>
+      <button class="lang-btn" id="lang-zh" onclick="setLang('zh')"><i class="fas fa-language"></i> 中文</button>
+      <button class="lang-btn" id="lang-en" onclick="setLang('en')"><i class="fas fa-language"></i> EN</button>
+    </div>
+    <button class="btn bb" id="btn-export-png" onclick="exportPNG()"><i class="fas fa-image"></i> PNG</button>
+    <button class="btn bb" id="btn-export-ppt" onclick="doExportPPT()"><i class="fas fa-chart-bar"></i> PPT</button>
+    <button class="btn bo" id="btn-add-data" onclick="showTab('tab-upload')"><i class="fas fa-plus"></i> Thêm dữ liệu</button>
+  </div>
+</div>
+
+<!-- FILTER / SEARCH BAR -->
+<div class="fbar">
+  <label>Từ:</label>
+  <input type="date" id="f-from">
+  <label>Đến:</label>
+  <input type="date" id="f-to">
+  <label>Line:</label>
+  <select id="f-line"><option value="">Tất cả</option></select>
+  <label>Model:</label>
+  <select id="f-model"><option value="">Tất cả</option></select>
+  <label><i class="fas fa-search"></i></label>
+  <input type="text" id="f-search" placeholder="Tìm theo line, model, lỗi..." oninput="applyFilter()">
+  <button class="btn bx" style="padding:4px 10px;font-size:10px;" onclick="applyFilter()"><i class="fas fa-filter"></i> Lọc</button>
+  <button class="btn bx" style="padding:4px 10px;font-size:10px;" onclick="clearFilter()"><i class="fas fa-times"></i> Xóa</button>
+  <span id="fstatus"></span>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-dashboard" onclick="showTab('tab-dashboard')"><i class="fas fa-chart-line"></i> Dashboard</div>
+  <div class="tab" id="tab-data" onclick="showTab('tab-data')"><i class="fas fa-table"></i> Dữ liệu</div>
+  <div class="tab" id="tab-upload" onclick="showTab('tab-upload')"><i class="fas fa-cloud-upload-alt"></i> Upload / Nhập liệu</div>
+</div>
+
+<!-- DASHBOARD PANEL -->
+<div class="panel active" id="panel-dashboard">
+  <div id="no-data" class="no-data">
+    <div style="font-size:36px;margin-bottom:10px"><i class="fas fa-folder-open"></i></div>
+    <div id="no-data-title" style="font-size:15px;font-weight:700;margin-bottom:5px">Chưa có dữ liệu</div>
+    <div id="no-data-sub" style="font-size:12px">Upload Excel hoặc thêm dữ liệu thủ công để bắt đầu</div>
+    <br>
+    <button class="btn bg" id="no-data-btn" onclick="loadSample()"><i class="fas fa-download"></i> Tải dữ liệu mẫu</button>
+  </div>
+  <div id="dash-content" style="display:none">
+    <div class="kpi-row" id="kpi-row"></div>
+    
+    <div class="grid2">
+      <div>
+        <div class="card" id="card-bar"></div>
+        <!-- LEAN → Models Mapping -->
+        <div style="margin-top:14px">
+          <div style="font-size:14px;font-weight:700;color:var(--tx1);margin-bottom:8px;padding:0 4px;"><i class="fas fa-industry"></i> LEAN Line & Models Performance</div>
+          <div class="card" id="card-lean-models"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" id="card-best"></div>
+        <div class="card" id="card-worst"></div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="card" id="card-pareto"></div>
+      <div class="card" id="card-heatmap"></div>
+      <div class="card" id="card-model"></div>
+    </div>
+    <div class="conc" id="card-conc"></div>
+  </div>
+</div>
+
+<!-- DATA PANEL -->
+<div class="panel" id="panel-data">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span id="data-count" style="font-size:10px;color:var(--tx3);"></span>
+    <button class="btn br" style="font-size:10px;padding:4px 10px;" onclick="clearAll()"><i class="fas fa-trash"></i> Xóa tất cả</button>
+  </div>
+  <div class="tbl-wrap">
+    <table class="dt" id="dt">
+      <thead><tr>
+        <th>Ngày</th><th>Line</th><th>Model</th><th>SL KT</th><th>RFT%</th>
+        <th>Tổng lỗi</th><th>Tỷ lệ lỗi%</th><th>Lỗi 1</th><th>SL</th><th>Lỗi 2</th><th>SL</th><th>Lỗi 3</th><th>SL</th><th></th>
+      </tr></thead>
+      <tbody id="dt-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- UPLOAD PANEL -->
+<div class="panel" id="panel-upload">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+    <!-- Upload File 1 (Detail) -->
+    <div>
+      <div class="card">
+        <div class="card-hd ch-blue" style="font-size:11px"><i class="fas fa-file"></i> File 1: Detail Data</div>
+        <div style="padding:10px;">
+          <div class="upload-zone" id="uploadZone1" onclick="document.getElementById('fileInput1').click()" style="min-height:120px">
+            <div style="font-size:28px;margin-bottom:4px"><i class="fas fa-folder"></i></div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);">Upload File 1</div>
+            <p style="font-size:9px;margin-top:4px">Defect Summary<br>(raw detail data)</p>
+            <input type="file" id="fileInput1" accept=".xlsx,.xls" style="display:none">
+          </div>
+          <div id="upload-log1" style="font-size:9px;color:var(--tx3);padding:6px 0;line-height:1.6;max-height:100px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Upload File 2 (Summary Wide) -->
+    <div>
+      <div class="card">
+        <div class="card-hd ch-green" style="font-size:11px"><i class="fas fa-chart-bar"></i> File 2: RFT Report</div>
+        <div style="padding:10px;">
+          <div class="upload-zone" id="uploadZone2" onclick="document.getElementById('fileInput2').click()" style="min-height:120px">
+            <div style="font-size:28px;margin-bottom:4px"><i class="fas fa-folder"></i></div>
+            <div style="font-size:11px;font-weight:700;color:var(--tx2);">Upload File 2</div>
+            <p style="font-size:9px;margin-top:4px">RFT Report<br>(wide-format summary)</p>
+            <input type="file" id="fileInput2" accept=".xlsx,.xls" style="display:none">
+          </div>
+          <div id="upload-log2" style="font-size:9px;color:var(--tx3);padding:6px 0;line-height:1.6;max-height:100px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+    
+
+  </div>
+  
+  <!-- Manual Entry (moved below) -->
+  <div style="margin-top:18px">
+    <div class="card">
+
+      <div class="card-hd ch-green"><i class="fas fa-plus-circle"></i> Thêm dữ liệu thủ công</div>
+      <div style="padding:12px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+          <div>
+            <div class="form-lbl">Ngày</div>
+            <input class="form-inp" type="date" id="m-date">
+          </div>
+          <div>
+            <div class="form-lbl">Line</div>
+            <input class="form-inp" type="text" id="m-lean" placeholder="GCD_C1">
+          </div>
+          <div>
+            <div class="form-lbl">Model</div>
+            <input class="form-inp" type="text" id="m-model" placeholder="Model name">
+          </div>
+          <div>
+            <div class="form-lbl">SL Kiểm</div>
+            <input class="form-inp" type="number" id="m-qty" placeholder="500">
+          </div>
+        </div>
+        <div style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div>
+            <div class="form-lbl">Lỗi 1</div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;">
+              <input class="form-inp" type="text" id="m-d1n" placeholder="Defect name">
+              <input class="form-inp" type="number" id="m-d1q" placeholder="Qty">
+            </div>
+          </div>
+          <div>
+            <div class="form-lbl">Lỗi 2</div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;">
+              <input class="form-inp" type="text" id="m-d2n" placeholder="Defect name">
+              <input class="form-inp" type="number" id="m-d2q" placeholder="Qty">
+            </div>
+          </div>
+          <div>
+            <div class="form-lbl">Lỗi 3</div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:4px;">
+              <input class="form-inp" type="text" id="m-d3n" placeholder="Defect name">
+              <input class="form-inp" type="number" id="m-d3q" placeholder="Qty">
+            </div>
+          </div>
+        </div>
+        <button class="btn bg" style="width:100%;justify-content:center;padding:8px;font-size:11px;margin-top:10px;" id="add-btn" onclick="addRow()"><i class="fas fa-plus"></i> Thêm vào dữ liệu</button>
+        <div id="add-msg" style="font-size:9px;text-align:center;min-height:14px;margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INFOGRAPHIC (hidden) -->
+<div id="infographic"></div>
+
+<!-- JavaScript Files -->
+<script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/render.js"></script>
+<script src="js/export.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

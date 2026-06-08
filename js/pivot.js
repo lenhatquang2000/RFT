@@ -113,32 +113,78 @@ function createIndependentPivotTable() {
   const elem = document.getElementById('pivot-table-ui');
   elem.innerHTML = '';
 
-  // Tạo container cho pivot table với scrollbar
-  const pivotContainer = document.createElement('div');
-  pivotContainer.style.maxWidth = '100%';
-  pivotContainer.style.overflowX = 'auto';
-  pivotContainer.style.marginBottom = '20px';
-  pivotContainer.style.border = '1px solid var(--bd)';
-  pivotContainer.style.borderRadius = '8px';
-  pivotContainer.style.backgroundColor = 'var(--bg)';
-  
-  elem.appendChild(pivotContainer);
+  // Aggregate data by Model
+  const modelStats = {};
 
-  // Tạo pivot table với cấu hình dễ hiểu hơn
-  $(pivotContainer).pivot(pivotRawData, {
-    rows: ['Ngày'],
-    cols: ['Model'],
-    vals: ['Kiểm Tra'],
-    aggregatorName: 'Sum',
-    rendererName: 'Table Heatmap',
-    sorters: {
-      'Ngày': $.pivotUtilities.sortAs
-    },
-    renderers: $.extend(
-      $.pivotUtilities.renderers,
-      $.pivotUtilities.plotly_renderers
-    )
+  pivotRawData.forEach(row => {
+    const model = row['Model'] || '';
+    
+    if (!model || model.trim() === '' || model === 'Model Name') return;
+    
+    const kiemTra = parseInt(row['Kiểm Tra']) || 0;
+    const loi = parseInt(row['Lỗi']) || 0;
+
+    if (!modelStats[model]) {
+      modelStats[model] = { totalKiemTra: 0, totalLoi: 0 };
+    }
+
+    modelStats[model].totalKiemTra += kiemTra;
+    modelStats[model].totalLoi += loi;
   });
+
+  // Sort by defect rate descending
+  const sortedModels = Object.entries(modelStats)
+    .map(([model, stat]) => ({
+      model,
+      sumLoi: stat.totalLoi,
+      sumKiemTra: stat.totalKiemTra,
+      defectRate: stat.totalKiemTra > 0 ? (stat.totalLoi / stat.totalKiemTra * 100).toFixed(2) : 0
+    }))
+    .sort((a, b) => b.defectRate - a.defectRate);
+
+  // Tạo container với scrollbar
+  const tableContainer = document.createElement('div');
+  tableContainer.style.maxWidth = '100%';
+  tableContainer.style.overflowX = 'auto';
+  tableContainer.style.marginBottom = '20px';
+  tableContainer.style.border = '1px solid var(--bd)';
+  tableContainer.style.borderRadius = '8px';
+  
+  // Tạo bảng HTML
+  let tableHTML = `
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: var(--bg2); border-bottom: 2px solid var(--bd);">
+          <th style="padding: 12px; text-align: left; font-weight: 700; color: var(--tx);">Row Labels</th>
+          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of Lỗi</th>
+          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of Kiểm Tra</th>
+          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Defect Rate %</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  sortedModels.forEach((item, idx) => {
+    const bgColor = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)';
+    const rateColor = item.defectRate >= 5 ? '#E03030' : item.defectRate >= 2 ? '#FF8C00' : '#00C45A';
+    
+    tableHTML += `
+      <tr style="background: ${bgColor}; border-bottom: 1px solid var(--bd2);">
+        <td style="padding: 10px 12px; color: var(--tx); font-weight: 500;">${item.model}</td>
+        <td style="padding: 10px 12px; text-align: right; color: var(--tx);">${item.sumLoi.toLocaleString()}</td>
+        <td style="padding: 10px 12px; text-align: right; color: var(--tx);">${item.sumKiemTra.toLocaleString()}</td>
+        <td style="padding: 10px 12px; text-align: right; color: ${rateColor}; font-weight: 700;">${item.defectRate}%</td>
+      </tr>
+    `;
+  });
+
+  tableHTML += `
+      </tbody>
+    </table>
+  `;
+
+  tableContainer.innerHTML = tableHTML;
+  elem.appendChild(tableContainer);
 
   // Thêm phân tích Top Models & Defects
   const analysisHTML = generateTopModelsAnalysis();

@@ -113,8 +113,19 @@ function createIndependentPivotTable() {
   const elem = document.getElementById('pivot-table-ui');
   elem.innerHTML = '';
 
+  // Tạo container cho pivot table với scrollbar
+  const pivotContainer = document.createElement('div');
+  pivotContainer.style.maxWidth = '100%';
+  pivotContainer.style.overflowX = 'auto';
+  pivotContainer.style.marginBottom = '20px';
+  pivotContainer.style.border = '1px solid var(--bd)';
+  pivotContainer.style.borderRadius = '8px';
+  pivotContainer.style.backgroundColor = 'var(--bg)';
+  
+  elem.appendChild(pivotContainer);
+
   // Tạo pivot table với cấu hình dễ hiểu hơn
-  $(elem).pivot(pivotRawData, {
+  $(pivotContainer).pivot(pivotRawData, {
     rows: ['Ngày'],
     cols: ['Model'],
     vals: ['Kiểm Tra'],
@@ -183,8 +194,9 @@ function generateTopModelsAnalysis() {
   const topModels = [];
   let currentRank = 0;
   let previousRate = null;
+  let maxRank = -1;  // Lưu rank tối đa để bao gồm tất cả model có cùng rank
   
-  for (let i = 0; i < sortedModels.length && currentRank < 5; i++) {
+  for (let i = 0; i < sortedModels.length; i++) {
     const currentRate = sortedModels[i][1].defectRate;
     
     // Nếu tỷ lệ khác với tỷ lệ trước đó, tăng rank
@@ -193,100 +205,129 @@ function generateTopModelsAnalysis() {
       previousRate = currentRate;
     }
     
-    // Chỉ thêm vào nếu rank <= 5
-    if (currentRank <= 5) {
-      topModels.push(sortedModels[i]);
+    // Nếu rank vượt quá 5 và chưa lưu maxRank, thì dừng
+    if (currentRank > 5) {
+      break;
     }
+    
+    // Lưu maxRank khi lần đầu đạt rank 5
+    if (currentRank === 5) {
+      maxRank = 5;
+    }
+    
+    topModels.push(sortedModels[i]);
   }
+
+  // Nhóm models theo rank
+  const modelsByRank = {};
+  let displayRank = 0;
+  let previousDisplayRate = null;
+  
+  topModels.forEach((item, idx) => {
+    const stat = item[1];
+    
+    // Tính rank hiển thị
+    if (previousDisplayRate === null || stat.defectRate !== previousDisplayRate) {
+      displayRank++;
+      previousDisplayRate = stat.defectRate;
+    }
+    
+    if (!modelsByRank[displayRank]) {
+      modelsByRank[displayRank] = [];
+    }
+    modelsByRank[displayRank].push(item);
+  });
 
   let html = '<div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--bd);">';
   html += '<h3 style="color: var(--tx); margin-bottom: 20px; font-size: 14px;"><i class="fas fa-exclamation-triangle"></i> TOP 5 MODEL CÓ TỶ LỆ LỖI CAO NHẤT</h3>';
 
-  html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+  // Layout 5 cột (mỗi cột là 1 rank)
+  html += '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">';
 
-  // Xác định rank cho mỗi model
-  let displayRank = 0;
-  let previousRate = null;
-  
-  topModels.forEach((item, idx) => {
-    const model = item[0];
-    const stat = item[1];
-    const defects = modelDefects[model] || {};
+  for (let rank = 1; rank <= 5; rank++) {
+    html += '<div style="display: flex; flex-direction: column; gap: 12px;">';
     
-    // Tính rank hiển thị
-    if (previousRate === null || stat.defectRate !== previousRate) {
-      displayRank = idx + 1;
-      previousRate = stat.defectRate;
-    }
+    if (modelsByRank[rank]) {
+      modelsByRank[rank].forEach((item, itemIdx) => {
+        const model = item[0];
+        const stat = item[1];
+        const defects = modelDefects[model] || {};
 
-    // Sắp xếp top 3 lỗi (cũng xử lý tie)
-    const sortedDefects = Object.entries(defects)
-      .sort((a, b) => b[1] - a[1]);
+        // Sắp xếp top 3 lỗi
+        const sortedDefects = Object.entries(defects)
+          .sort((a, b) => b[1] - a[1]);
+        
+        const top3Defects = [];
+        let defectRank = 0;
+        let prevQty = null;
+        
+        for (let i = 0; i < sortedDefects.length && defectRank < 3; i++) {
+          const currentQty = sortedDefects[i][1];
+          
+          if (prevQty === null || currentQty !== prevQty) {
+            defectRank++;
+            prevQty = currentQty;
+          }
+          
+          if (defectRank <= 3) {
+            top3Defects.push(sortedDefects[i]);
+          }
+        }
+
+        const defectNames = {
+          'Contamination': '🔴 Nhiễm bẩn',
+          'ColorIssue': '🟡 Lỗi màu sắc',
+          'MidsoleQuality': '🟠 Chất lượng đế giữa',
+          'Delamination_Large': '🔵 Tách lớp lớn',
+          'Delamination_Small': '🟣 Tách lớp nhỏ'
+        };
+
+        const rateColor = stat.defectRate >= 5 ? '#E03030' : stat.defectRate >= 2 ? '#FF8C00' : '#00C45A';
+
+        html += `<div style="background: var(--bg3); border: 1px solid var(--bd); border-radius: 8px; padding: 15px; border-left: 4px solid ${rateColor};">`;
+        html += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">`;
+        html += `<div>`;
+        html += `<div style="font-weight: 700; color: var(--tx); font-size: 13px; margin-bottom: 4px;">#${rank} ${model}</div>`;
+        html += `<div style="color: var(--tx2); font-size: 12px;">Kiểm: ${stat.totalKiemTra} | Lỗi: ${stat.totalLoi}</div>`;
+        html += `</div>`;
+        html += `<div style="background: ${rateColor}20; color: ${rateColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;">`;
+        html += `${stat.defectRate}%`;
+        html += `</div>`;
+        html += `</div>`;
+
+        html += `<div style="background: var(--bg2); padding: 10px; border-radius: 6px;">`;
+        html += `<div style="color: var(--tx2); font-size: 11px; font-weight: 600; margin-bottom: 8px;">TOP 3 LỖI:</div>`;
+
+        top3Defects.forEach((defect, defIdx) => {
+          const defectType = defect[0];
+          const defectQty = defect[1];
+          const defectPercent = ((defectQty / stat.totalLoi) * 100).toFixed(1);
+          const defectName = defectNames[defectType] || defectType;
+
+          html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 6px; background: var(--bg3); border-radius: 4px;">`;
+          html += `<span style="color: var(--tx2); font-size: 11px;">`;
+          html += `${defectName}<br><span style="color: var(--tx3); font-size: 10px;">${defectQty} cái</span>`;
+          html += `</span>`;
+          html += `<span style="background: var(--bd2); color: var(--tx); padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">`;
+          html += `${defectPercent}%`;
+          html += `</span>`;
+          html += `</div>`;
+        });
+
+        if (top3Defects.length === 0) {
+          html += `<div style="color: var(--tx3); font-size: 11px; text-align: center; padding: 10px;">Không có dữ liệu lỗi chi tiết</div>`;
+        }
+
+        html += `</div>`;
+        html += `</div>`;
+      });
+    } else {
+      // Cột trống nếu không có rank này
+      html += '<div style="background: var(--bg3); border: 1px solid var(--bd); border-radius: 8px; padding: 15px; text-align: center; color: var(--tx3); min-height: 100px; display: flex; align-items: center; justify-content: center;">Không có dữ liệu</div>';
+    }
     
-    const top3Defects = [];
-    let defectRank = 0;
-    let prevQty = null;
-    
-    for (let i = 0; i < sortedDefects.length && defectRank < 3; i++) {
-      const currentQty = sortedDefects[i][1];
-      
-      if (prevQty === null || currentQty !== prevQty) {
-        defectRank++;
-        prevQty = currentQty;
-      }
-      
-      if (defectRank <= 3) {
-        top3Defects.push(sortedDefects[i]);
-      }
-    }
-
-    const defectNames = {
-      'Contamination': '🔴 Nhiễm bẩn',
-      'ColorIssue': '🟡 Lỗi màu sắc',
-      'MidsoleQuality': '🟠 Chất lượng đế giữa',
-      'Delamination_Large': '🔵 Tách lớp lớn',
-      'Delamination_Small': '🟣 Tách lớp nhỏ'
-    };
-
-    const rateColor = stat.defectRate >= 5 ? '#E03030' : stat.defectRate >= 2 ? '#FF8C00' : '#00C45A';
-
-    html += `<div style="background: var(--bg3); border: 1px solid var(--bd); border-radius: 8px; padding: 15px; border-left: 4px solid ${rateColor};">`;
-    html += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">`;
-    html += `<div>`;
-    html += `<div style="font-weight: 700; color: var(--tx); font-size: 13px; margin-bottom: 4px;">#${displayRank} ${model}</div>`;
-    html += `<div style="color: var(--tx2); font-size: 12px;">Kiểm: ${stat.totalKiemTra} | Lỗi: ${stat.totalLoi}</div>`;
-    html += `</div>`;
-    html += `<div style="background: ${rateColor}20; color: ${rateColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;">`;
-    html += `${stat.defectRate}%`;
-    html += `</div>`;
-    html += `</div>`;
-
-    html += `<div style="background: var(--bg2); padding: 10px; border-radius: 6px;">`;
-    html += `<div style="color: var(--tx2); font-size: 11px; font-weight: 600; margin-bottom: 8px;">TOP 3 LỖI:</div>`;
-
-    top3Defects.forEach((defect, defIdx) => {
-      const defectType = defect[0];
-      const defectQty = defect[1];
-      const defectPercent = ((defectQty / stat.totalLoi) * 100).toFixed(1);
-      const defectName = defectNames[defectType] || defectType;
-
-      html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 6px; background: var(--bg3); border-radius: 4px;">`;
-      html += `<span style="color: var(--tx2); font-size: 11px;">`;
-      html += `${defectName}<br><span style="color: var(--tx3); font-size: 10px;">${defectQty} cái</span>`;
-      html += `</span>`;
-      html += `<span style="background: var(--bd2); color: var(--tx); padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;">`;
-      html += `${defectPercent}%`;
-      html += `</span>`;
-      html += `</div>`;
-    });
-
-    if (top3Defects.length === 0) {
-      html += `<div style="color: var(--tx3); font-size: 11px; text-align: center; padding: 10px;">Không có dữ liệu lỗi chi tiết</div>`;
-    }
-
-    html += `</div>`;
-    html += `</div>`;
-  });
+    html += '</div>';
+  }
 
   html += '</div>';
   html += '</div>';
@@ -353,7 +394,7 @@ function generateDataVerification() {
   let currentRank = 0;
   let previousKiemTra = null;
   
-  for (let i = 0; i < sortedByInspected.length && currentRank < 5; i++) {
+  for (let i = 0; i < sortedByInspected.length; i++) {
     const currentKiemTra = sortedByInspected[i][1].kiemTra;
     
     if (previousKiemTra === null || currentKiemTra !== previousKiemTra) {
@@ -361,9 +402,12 @@ function generateDataVerification() {
       previousKiemTra = currentKiemTra;
     }
     
-    if (currentRank <= 5) {
-      topModels.push(sortedByInspected[i]);
+    // Nếu rank vượt quá 5 thì dừng
+    if (currentRank > 5) {
+      break;
     }
+    
+    topModels.push(sortedByInspected[i]);
   }
 
   html += '<div style="background: var(--bg3); padding: 15px; border-radius: 8px; border-left: 4px solid #3A7BD5;">';

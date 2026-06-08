@@ -165,18 +165,18 @@ function renderBestWorst(s) {
   
   // Lấy bottom 3 tệ nhất (bao gồm các line có cùng RFT)
   const bot3 = [];
-  currentRank = 0;
-  previousRFT = null;
+  let currentRank2 = 0;
+  let previousRFT2 = null;
   
-  for (let i = s.lineArr.length - 1; i >= 0 && currentRank < 3; i--) {
+  for (let i = s.lineArr.length - 1; i >= 0 && currentRank2 < 3; i--) {
     const currentRFT = s.lineArr[i].rft;
     
-    if (previousRFT === null || currentRFT !== previousRFT) {
-      currentRank++;
-      previousRFT = currentRFT;
+    if (previousRFT2 === null || currentRFT !== previousRFT2) {
+      currentRank2++;
+      previousRFT2 = currentRFT;
     }
     
-    if (currentRank <= 3) {
+    if (currentRank2 <= 3) {
       bot3.push(s.lineArr[i]);
     }
   }

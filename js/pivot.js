@@ -175,25 +175,70 @@ function generateTopModelsAnalysis() {
     stat.defectRate = stat.totalKiemTra > 0 ? (stat.totalLoi / stat.totalKiemTra * 100).toFixed(2) : 0;
   });
 
-  // Lấy top 5 models với tỷ lệ lỗi cao nhất
-  const topModels = Object.entries(modelStats)
-    .sort((a, b) => b[1].defectRate - a[1].defectRate)
-    .slice(0, 5);
+  // Lấy top 5 models với tỷ lệ lỗi cao nhất (bao gồm cả các model có cùng tỷ lệ)
+  const sortedModels = Object.entries(modelStats)
+    .sort((a, b) => b[1].defectRate - a[1].defectRate);
+  
+  // Tìm tất cả models có cùng top 5 ranking
+  const topModels = [];
+  let currentRank = 0;
+  let previousRate = null;
+  
+  for (let i = 0; i < sortedModels.length && currentRank < 5; i++) {
+    const currentRate = sortedModels[i][1].defectRate;
+    
+    // Nếu tỷ lệ khác với tỷ lệ trước đó, tăng rank
+    if (previousRate === null || currentRate !== previousRate) {
+      currentRank++;
+      previousRate = currentRate;
+    }
+    
+    // Chỉ thêm vào nếu rank <= 5
+    if (currentRank <= 5) {
+      topModels.push(sortedModels[i]);
+    }
+  }
 
   let html = '<div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--bd);">';
   html += '<h3 style="color: var(--tx); margin-bottom: 20px; font-size: 14px;"><i class="fas fa-exclamation-triangle"></i> TOP 5 MODEL CÓ TỶ LỆ LỖI CAO NHẤT</h3>';
 
   html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
 
+  // Xác định rank cho mỗi model
+  let displayRank = 0;
+  let previousRate = null;
+  
   topModels.forEach((item, idx) => {
     const model = item[0];
     const stat = item[1];
     const defects = modelDefects[model] || {};
+    
+    // Tính rank hiển thị
+    if (previousRate === null || stat.defectRate !== previousRate) {
+      displayRank = idx + 1;
+      previousRate = stat.defectRate;
+    }
 
-    // Sắp xếp top 3 lỗi
-    const top3Defects = Object.entries(defects)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3);
+    // Sắp xếp top 3 lỗi (cũng xử lý tie)
+    const sortedDefects = Object.entries(defects)
+      .sort((a, b) => b[1] - a[1]);
+    
+    const top3Defects = [];
+    let defectRank = 0;
+    let prevQty = null;
+    
+    for (let i = 0; i < sortedDefects.length && defectRank < 3; i++) {
+      const currentQty = sortedDefects[i][1];
+      
+      if (prevQty === null || currentQty !== prevQty) {
+        defectRank++;
+        prevQty = currentQty;
+      }
+      
+      if (defectRank <= 3) {
+        top3Defects.push(sortedDefects[i]);
+      }
+    }
 
     const defectNames = {
       'Contamination': '🔴 Nhiễm bẩn',
@@ -208,7 +253,7 @@ function generateTopModelsAnalysis() {
     html += `<div style="background: var(--bg3); border: 1px solid var(--bd); border-radius: 8px; padding: 15px; border-left: 4px solid ${rateColor};">`;
     html += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">`;
     html += `<div>`;
-    html += `<div style="font-weight: 700; color: var(--tx); font-size: 13px; margin-bottom: 4px;">#${idx + 1} ${model}</div>`;
+    html += `<div style="font-weight: 700; color: var(--tx); font-size: 13px; margin-bottom: 4px;">#${displayRank} ${model}</div>`;
     html += `<div style="color: var(--tx2); font-size: 12px;">Kiểm: ${stat.totalKiemTra} | Lỗi: ${stat.totalLoi}</div>`;
     html += `</div>`;
     html += `<div style="background: ${rateColor}20; color: ${rateColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;">`;
@@ -300,24 +345,50 @@ function generateDataVerification() {
   html += '</table>';
   html += '</div>';
 
-  // Top 5 models kiểm tra nhiều nhất
-  const topModels = Object.entries(modelData)
-    .sort((a, b) => b[1].kiemTra - a[1].kiemTra)
-    .slice(0, 5);
+  // Top 5 models kiểm tra nhiều nhất (bao gồm các model có cùng số lượng)
+  const sortedByInspected = Object.entries(modelData)
+    .sort((a, b) => b[1].kiemTra - a[1].kiemTra);
+  
+  const topModels = [];
+  let currentRank = 0;
+  let previousKiemTra = null;
+  
+  for (let i = 0; i < sortedByInspected.length && currentRank < 5; i++) {
+    const currentKiemTra = sortedByInspected[i][1].kiemTra;
+    
+    if (previousKiemTra === null || currentKiemTra !== previousKiemTra) {
+      currentRank++;
+      previousKiemTra = currentKiemTra;
+    }
+    
+    if (currentRank <= 5) {
+      topModels.push(sortedByInspected[i]);
+    }
+  }
 
   html += '<div style="background: var(--bg3); padding: 15px; border-radius: 8px; border-left: 4px solid #3A7BD5;">';
   html += '<h4 style="color: var(--tx); margin-bottom: 15px; font-size: 13px;">🏆 TOP 5 MODEL ĐƯỢC KIỂM TRA NHIỀU NHẤT</h4>';
   html += '<table style="width: 100%; font-size: 11px; color: var(--tx2);">';
   html += '<tr style="border-bottom: 1px solid var(--bd); color: var(--tx3);"><th style="text-align: left; padding: 5px 0;">#</th><th style="text-align: left;">Model</th><th style="text-align: right;">Kiểm tra</th><th style="text-align: right;">Lỗi</th><th style="text-align: right;">%</th></tr>';
   
+  let displayRank = 0;
+  let prevKiemTra = null;
+  
   topModels.forEach((item, idx) => {
     const model = item[0];
     const data = item[1];
+    
+    // Tính rank hiển thị
+    if (prevKiemTra === null || data.kiemTra !== prevKiemTra) {
+      displayRank++;
+      prevKiemTra = data.kiemTra;
+    }
+    
     const rate = data.kiemTra > 0 ? (data.loi / data.kiemTra * 100).toFixed(2) : 0;
     const rateColor = rate >= 5 ? '#E03030' : rate >= 2 ? '#FF8C00' : '#00C45A';
     
     html += '<tr style="border-bottom: 1px solid var(--bd2);">';
-    html += '<td style="padding: 5px 0; color: var(--tx3);">' + (idx + 1) + '</td>';
+    html += '<td style="padding: 5px 0; color: var(--tx3);">' + displayRank + '</td>';
     html += '<td style="color: var(--tx);">' + model + '</td>';
     html += '<td style="text-align: right; color: var(--tx);">' + data.kiemTra.toLocaleString() + '</td>';
     html += '<td style="text-align: right; color: #E03030;">' + data.loi.toLocaleString() + '</td>';

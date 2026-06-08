@@ -145,8 +145,41 @@ function renderBar(s) {
 // BEST / WORST LINES
 // ═══════════════════════════════════════
 function renderBestWorst(s) {
-  const top3 = s.lineArr.slice(0, 3);
-  const bot3 = s.lineArr.slice(-3).reverse();
+  // Lấy top 3 tốt nhất (bao gồm các line có cùng RFT)
+  const top3 = [];
+  let currentRank = 0;
+  let previousRFT = null;
+  
+  for (let i = 0; i < s.lineArr.length && currentRank < 3; i++) {
+    const currentRFT = s.lineArr[i].rft;
+    
+    if (previousRFT === null || currentRFT !== previousRFT) {
+      currentRank++;
+      previousRFT = currentRFT;
+    }
+    
+    if (currentRank <= 3) {
+      top3.push(s.lineArr[i]);
+    }
+  }
+  
+  // Lấy bottom 3 tệ nhất (bao gồm các line có cùng RFT)
+  const bot3 = [];
+  currentRank = 0;
+  previousRFT = null;
+  
+  for (let i = s.lineArr.length - 1; i >= 0 && currentRank < 3; i--) {
+    const currentRFT = s.lineArr[i].rft;
+    
+    if (previousRFT === null || currentRFT !== previousRFT) {
+      currentRank++;
+      previousRFT = currentRFT;
+    }
+    
+    if (currentRank <= 3) {
+      bot3.push(s.lineArr[i]);
+    }
+  }
   
   // Best lines
   let bestHTML = '<div class="card-hd ch-green">' + t('bestTitle') + '</div>';
@@ -154,8 +187,19 @@ function renderBestWorst(s) {
     bestHTML += '<p style="padding:20px;color:var(--tx3);text-align:center">' + t('noData') + '</p>';
   } else {
     bestHTML += '<div style="padding:12px 15px;display:flex;flex-direction:column;gap:12px;">';
+    
+    let displayRank = 0;
+    let prevRFT = null;
+    
     top3.forEach(function(l, i) {
-      const medal = ['🥇', '🥈', '🥉'][i] || '🏆';
+      // Tính rank hiển thị
+      if (prevRFT === null || l.rft !== prevRFT) {
+        displayRank++;
+        prevRFT = l.rft;
+      }
+      
+      const medal = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : '🥉';
+      
       bestHTML += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--divider);">';
       bestHTML += '<div style="display:flex;justify-content:space-between;align-items:center;">';
       bestHTML += '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px">' + medal + '</span><b style="font-size:12px">' + hlText(l.lean) + '</b></div>';
@@ -183,8 +227,19 @@ function renderBestWorst(s) {
     worstHTML += '<p style="padding:20px;color:var(--tx3);text-align:center">' + t('noData') + '</p>';
   } else {
     worstHTML += '<div style="padding:12px 15px;display:flex;flex-direction:column;gap:12px;">';
+    
+    let displayRank = 0;
+    let prevRFT = null;
+    
     bot3.forEach(function(l, i) {
-      const icon = ['⚠️', '🔴', '🚨'][i] || '⛔';
+      // Tính rank hiển thị
+      if (prevRFT === null || l.rft !== prevRFT) {
+        displayRank++;
+        prevRFT = l.rft;
+      }
+      
+      const icon = displayRank === 1 ? '⚠️' : displayRank === 2 ? '🔴' : '🚨';
+      
       worstHTML += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--divider);">';
       worstHTML += '<div style="display:flex;justify-content:space-between;align-items:center;">';
       worstHTML += '<div style="display:flex;align-items:center;gap:6px;"><span style="font-size:18px">' + icon + '</span><b style="font-size:12px">' + hlText(l.lean) + '</b></div>';
@@ -219,18 +274,45 @@ function renderPareto(s) {
   if (!s.dArr || s.dArr.length === 0) {
     html += '<p style="padding:20px;color:var(--tx3);text-align:center">' + t('noData') + '</p>';
   } else {
-    const top10 = s.dArr.slice(0, 10);
+    // Lấy top 10 (bao gồm các defect có cùng qty)
+    const top10 = [];
+    let currentRank = 0;
+    let previousQty = null;
+    
+    for (let i = 0; i < s.dArr.length && currentRank < 10; i++) {
+      const currentQty = s.dArr[i].qty;
+      
+      if (previousQty === null || currentQty !== previousQty) {
+        currentRank++;
+        previousQty = currentQty;
+      }
+      
+      if (currentRank <= 10) {
+        top10.push(s.dArr[i]);
+      }
+    }
+    
     const maxQty = Math.max(...top10.map(d => d.qty));
     
     html += '<div style="padding:15px;display:flex;flex-direction:column;gap:10px;">';
+    
+    let displayRank = 0;
+    let prevQty = null;
+    
     top10.forEach(function(d, i) {
+      // Tính rank hiển thị
+      if (prevQty === null || d.qty !== prevQty) {
+        displayRank++;
+        prevQty = d.qty;
+      }
+      
       const barW = maxQty > 0 ? (d.qty / maxQty * 100) : 0;
       const cumColor = d.cumPct <= 80 ? '#FF9500' : '#FFC966';
-      const showCum = i < 5 || d.cumPct <= 90;
+      const showCum = displayRank <= 5 || d.cumPct <= 90;
       
       html += '<div style="display:flex;flex-direction:column;gap:3px;">';
       html += '<div style="display:flex;justify-content:space-between;align-items:baseline;">';
-      html += '<div style="font-size:10px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + (i + 1) + '. ' + hlText(d.name) + '</div>';
+      html += '<div style="font-size:10px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + displayRank + '. ' + hlText(d.name) + '</div>';
       html += '<div style="display:flex;gap:8px;align-items:baseline;">';
       html += '<span style="font-size:11px;font-weight:700;color:var(--orange)">' + d.qty.toLocaleString() + '</span>';
       html += '<span style="font-size:9px;color:var(--tx3)">(' + d.pct.toFixed(1) + '%)</span>';
@@ -247,8 +329,8 @@ function renderPareto(s) {
     });
     html += '</div>';
     
-    if (s.dArr.length > 10) {
-      const others = s.dArr.slice(10).reduce((sum, d) => sum + d.qty, 0);
+    if (s.dArr.length > top10.length) {
+      const others = s.dArr.slice(top10.length).reduce((sum, d) => sum + d.qty, 0);
       html += '<div style="padding:8px 15px;font-size:9px;color:var(--tx3);border-top:1px solid var(--divider);">';
       html += t('paretoOthers') + ': ' + others.toLocaleString() + ' (' + (s.totalD > 0 ? (others / s.totalD * 100).toFixed(1) : 0) + '%)';
       html += '</div>';
@@ -324,17 +406,44 @@ function renderModel(s) {
   if (!s.modelArr || s.modelArr.length === 0) {
     html += '<p style="padding:20px;color:var(--tx3);text-align:center">' + t('noData') + '</p>';
   } else {
-    const top8 = s.modelArr.slice(0, 8);
-    const maxRFT = Math.max(...top8.map(m => m.rft)); // Changed: use RFT for bar width
+    // Lấy top 8 (bao gồm các model có cùng RFT)
+    const top8 = [];
+    let currentRank = 0;
+    let previousRFT = null;
+    
+    for (let i = 0; i < s.modelArr.length && currentRank < 8; i++) {
+      const currentRFT = s.modelArr[i].rft;
+      
+      if (previousRFT === null || currentRFT !== previousRFT) {
+        currentRank++;
+        previousRFT = currentRFT;
+      }
+      
+      if (currentRank <= 8) {
+        top8.push(s.modelArr[i]);
+      }
+    }
+    
+    const maxRFT = Math.max(...top8.map(m => m.rft));
     
     html += '<div style="padding:12px 15px;display:flex;flex-direction:column;gap:10px;">';
+    
+    let displayRank = 0;
+    let prevRFT = null;
+    
     top8.forEach(function(m, i) {
-      const barW = maxRFT > 0 ? (m.rft / maxRFT * 100) : 0; // Changed: based on RFT
+      // Tính rank hiển thị
+      if (prevRFT === null || m.rft !== prevRFT) {
+        displayRank++;
+        prevRFT = m.rft;
+      }
+      
+      const barW = maxRFT > 0 ? (m.rft / maxRFT * 100) : 0;
       const rftColor = m.rft >= TARGET ? '#00B853' : m.rft >= (TARGET - 10) ? '#FF9500' : '#FF4444';
       
       html += '<div style="display:flex;flex-direction:column;gap:3px;">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-      html += '<div style="font-size:10px;font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis">' + (i + 1) + '. ' + hlText(m.model) + '</div>';
+      html += '<div style="font-size:10px;font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis">' + displayRank + '. ' + hlText(m.model) + '</div>';
       html += '<div style="display:flex;gap:10px;align-items:center;">';
       html += '<span style="font-size:9px;color:var(--tx3)">' + m.inspected.toLocaleString() + ' prs</span>';
       html += '<span style="font-size:12px;font-weight:700;color:' + rftColor + '">' + m.rft.toFixed(1) + '%</span>';
@@ -342,15 +451,15 @@ function renderModel(s) {
       html += '</div>';
       
       html += '<div style="position:relative;height:6px;background:var(--divider);border-radius:3px;overflow:hidden;">';
-      html += '<div style="position:absolute;left:0;top:0;bottom:0;width:' + barW + '%;background:' + rftColor + ';border-radius:3px;"></div>'; // Changed: color by RFT
+      html += '<div style="position:absolute;left:0;top:0;bottom:0;width:' + barW + '%;background:' + rftColor + ';border-radius:3px;"></div>';
       html += '</div>';
       html += '</div>';
     });
     html += '</div>';
     
-    if (s.modelArr.length > 8) {
+    if (s.modelArr.length > top8.length) {
       html += '<div style="padding:8px 15px;font-size:9px;color:var(--tx3);border-top:1px solid var(--divider);">';
-      html += '+ ' + (s.modelArr.length - 8) + ' ' + t('modelOthers');
+      html += '+ ' + (s.modelArr.length - top8.length) + ' ' + t('modelOthers');
       html += '</div>';
     }
   }

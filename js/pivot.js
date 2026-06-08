@@ -156,8 +156,8 @@ function createIndependentPivotTable() {
       <thead>
         <tr style="background: var(--bg2); border-bottom: 2px solid var(--bd);">
           <th style="padding: 12px; text-align: left; font-weight: 700; color: var(--tx);">Row Labels</th>
-          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of Lỗi</th>
-          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of Kiểm Tra</th>
+          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of DefectedQty</th>
+          <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Sum of InspectionQty</th>
           <th style="padding: 12px; text-align: right; font-weight: 700; color: var(--tx);">Defect Rate %</th>
         </tr>
       </thead>

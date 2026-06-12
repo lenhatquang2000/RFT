@@ -107,8 +107,8 @@ function renderMobileDashboard() {
   
   // Line Performance - Ranking với target line
   html += `
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="margin-bottom:2px;">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px;display:flex;align-items:center;justify-content:space-between;">
         <span>${t('mobileRanking')}</span>
         <span style="font-size:8px;color:var(--yellow);">${t('mobileTarget')} 85%</span>
       </div>
@@ -138,8 +138,8 @@ function renderMobileDashboard() {
   
   // Line Details - Grid 3 cột với tất cả lines
   html += `
-    <div style="margin-bottom:12px;">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:8px;">
+    <div style="margin-bottom:2px;">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px;">
         ${t('mobileDetails')}
       </div>
       <div class="mobile-line-grid">
@@ -163,14 +163,14 @@ function renderMobileDashboard() {
           <div style="background:${rftBg};color:${rftColor};padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;">${line.avgRFT}%</div>
         </div>
         
-        <div style="display:flex;gap:8px;font-size:8px;color:var(--tx3);margin:6px 0;">
+        <div style="display:flex;gap:8px;font-size:8px;color:var(--tx3);margin:2px 0;">
           <span>${line.qty.toLocaleString()} prs</span>
           <span style="color:#4AE88A;">${line.released.toLocaleString()}</span>
           <span style="color:#FF7070;">${line.defects}</span>
         </div>
         
-        <div style="margin-top:6px;">
-          <div style="font-size:7px;font-weight:700;color:var(--tx3);margin-bottom:3px;">MODELS (${modelList.length}):</div>
+        <div style="margin-top:2px;">
+          <div style="font-size:7px;font-weight:700;color:var(--tx3);margin-bottom:2px;">MODELS (${modelList.length}):</div>
     `;
     
     if (modelList.length <= 2) {
@@ -225,8 +225,8 @@ function renderMobileDashboard() {
   const bottomModels = modelPerf.slice(-3).reverse();
   
   html += `
-    <div style="margin-bottom:12px;">
-      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:8px;">
+    <div style="margin-bottom:2px;">
+      <div style="font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:2px;">
         ${t('mobileTopModels')}
       </div>
       <div class="mobile-model-grid">
@@ -244,14 +244,14 @@ function renderMobileDashboard() {
     
     html += `
       <div class="mobile-model-item">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px;">
           <div style="font-size:9px;font-weight:700;color:var(--tx);display:flex;align-items:center;gap:4px;">
             <span>${medal}</span>
-            <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${model.model}</span>
+            <span style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${model.model}</span>
           </div>
           <div style="font-size:11px;font-weight:700;color:#4AE88A;">${model.avgRFT}%</div>
         </div>
-        <div style="font-size:7px;color:var(--tx3);">
+        <div style="font-size:7px;color:var(--tx3);line-height:1.2;">
           ${model.qty.toLocaleString()} prs • ${model.released.toLocaleString()} OK • ${model.defects} NG
         </div>
       </div>
@@ -272,14 +272,14 @@ function renderMobileDashboard() {
     
     html += `
       <div class="mobile-model-item">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
           <div style="font-size:9px;font-weight:700;color:var(--tx);display:flex;align-items:center;gap:4px;">
             <span>${icon}</span>
-            <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${model.model}</span>
+            <span style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${model.model}</span>
           </div>
           <div style="font-size:11px;font-weight:700;color:#FF7070;">${model.avgRFT}%</div>
         </div>
-        <div style="font-size:7px;color:var(--tx3);">
+        <div style="font-size:7px;color:var(--tx3);line-height:1.2;">
           ${model.qty.toLocaleString()} prs • ${model.released.toLocaleString()} OK • ${model.defects} NG
         </div>
       </div>
@@ -371,22 +371,139 @@ async function exportMobilePNG() {
     exportContainer.style.padding = '0';
     exportContainer.style.fontFamily = "'Noto Sans','Noto Sans SC','Segoe UI',sans-serif";
     
-    // Create header
-    const header = document.createElement('div');
-    header.style.cssText = 'background:#111827;border-bottom:2px solid #00C45A;padding:12px 16px;display:flex;align-items:center;gap:10px;';
-    header.innerHTML = `
-      <div style="background:#006B30;color:#fff;font-weight:900;font-size:16px;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;">SF</div>
-      <div style="line-height:1.3;flex:1;">
-        <div style="font-size:13px;font-weight:700;color:#F0F4FF;">STOCKFITTING QUALITY</div>
-        <div style="font-size:8px;color:rgba(240,244,255,.38);">Bảng kết quả chất lượng</div>
-      </div>
-    `;
-    exportContainer.appendChild(header);
-    
     // Clone the mobile content
     const contentClone = mobileContent.cloneNode(true);
-    contentClone.style.padding = '12px';
+    contentClone.style.padding = '6px';
     contentClone.style.background = '#0D0D14';
+    
+    // Optimize spacing - reduce margins and gaps to max 2px
+    const optimizeSpacing = (element) => {
+      // Reduce divider margins to 2px
+      const dividers = element.querySelectorAll('.mobile-divider');
+      dividers.forEach(div => {
+        div.style.margin = '2px 0';
+      });
+      
+      // Reduce ALL section margins to 2px
+      const sections = element.querySelectorAll('[style*="margin-bottom"]');
+      sections.forEach(sec => {
+        const currentStyle = sec.getAttribute('style') || '';
+        sec.setAttribute('style', currentStyle.replace(/margin-bottom:\s*\d+px/g, 'margin-bottom:2px'));
+      });
+      
+      // Reduce KPI grid gap and margin
+      const kpiGrid = element.querySelector('.mobile-kpi-grid');
+      if (kpiGrid) {
+        kpiGrid.style.gap = '4px';
+        kpiGrid.style.marginBottom = '2px';
+      }
+      
+      // Reduce KPI card padding
+      const kpiCards = element.querySelectorAll('.mobile-kpi');
+      kpiCards.forEach(card => {
+        card.style.padding = '6px 4px';
+      });
+      
+      // Reduce KPI label margin
+      const kpiLabels = element.querySelectorAll('.mobile-kpi-label');
+      kpiLabels.forEach(label => {
+        label.style.marginBottom = '2px';
+      });
+      
+      // Reduce KPI value margin
+      const kpiValues = element.querySelectorAll('.mobile-kpi-value');
+      kpiValues.forEach(value => {
+        value.style.marginBottom = '1px';
+      });
+      
+      // Reduce line grid gap
+      const lineGrid = element.querySelector('.mobile-line-grid');
+      if (lineGrid) {
+        lineGrid.style.gap = '4px';
+        lineGrid.style.marginBottom = '2px';
+      }
+      
+      // Reduce line items padding
+      const lineItems = element.querySelectorAll('.mobile-perf-item');
+      lineItems.forEach(item => {
+        item.style.padding = '4px';
+      });
+      
+      // Reduce model grid gap
+      const modelGrid = element.querySelector('.mobile-model-grid');
+      if (modelGrid) {
+        modelGrid.style.gap = '4px';
+        modelGrid.style.marginBottom = '2px';
+      }
+      
+      // Reduce model cards padding
+      const modelCards = element.querySelectorAll('.mobile-model-card');
+      modelCards.forEach(card => {
+        card.style.padding = '4px';
+      });
+      
+      // Reduce model header margin
+      const modelHeaders = element.querySelectorAll('.mobile-model-header');
+      modelHeaders.forEach(header => {
+        header.style.marginBottom = '2px';
+        header.style.paddingBottom = '2px';
+        header.style.fontSize = '8px';
+      });
+      
+      // Reduce model items padding and margins
+      const modelItems = element.querySelectorAll('.mobile-model-item');
+      modelItems.forEach(item => {
+        item.style.padding = '2px 0';
+        item.style.marginBottom = '0';
+      });
+      
+      // Reduce model item inner spacing
+      const modelItemDivs = element.querySelectorAll('.mobile-model-item > div');
+      modelItemDivs.forEach(div => {
+        if (div.style.marginBottom) {
+          div.style.marginBottom = '1px';
+        }
+      });
+      
+      // Reduce card padding
+      const cards = element.querySelectorAll('.mobile-card');
+      cards.forEach(card => {
+        card.style.padding = '6px';
+        card.style.marginBottom = '2px';
+      });
+      
+      // Reduce bar row margins
+      const barRows = element.querySelectorAll('.mobile-bar-row');
+      barRows.forEach(row => {
+        row.style.marginBottom = '2px';
+        row.style.gap = '4px';
+      });
+      
+      // Reduce pareto row margins
+      const paretoRows = element.querySelectorAll('.mobile-pareto-row');
+      paretoRows.forEach(row => {
+        row.style.marginBottom = '2px';
+        row.style.gap = '4px';
+      });
+      
+      // Reduce all text margins
+      const allDivs = element.querySelectorAll('div');
+      allDivs.forEach(div => {
+        const style = div.getAttribute('style') || '';
+        if (style.includes('margin-top')) {
+          div.setAttribute('style', style.replace(/margin-top:\s*\d+px/g, 'margin-top:2px'));
+        }
+        if (style.includes('padding-top')) {
+          div.setAttribute('style', style.replace(/padding-top:\s*\d+px/g, 'padding-top:2px'));
+        }
+        if (style.includes('padding-bottom') && !style.includes('border-bottom')) {
+          div.setAttribute('style', style.replace(/padding-bottom:\s*\d+px/g, 'padding-bottom:2px'));
+        }
+      });
+    };
+    
+    optimizeSpacing(contentClone);
+    
     exportContainer.appendChild(contentClone);
     
     // Add to document

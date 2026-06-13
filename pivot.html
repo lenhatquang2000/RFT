@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Stockfitting Quality Status - Pivot Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://unpkg.com/pivottable@2.23.0/dist/pivot.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body {
+    padding-bottom: 40px;
+  }
+  .pivot-container {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+  .pivot-content-card {
+    background: var(--bg2);
+    border: 1px solid var(--bd);
+    border-radius: var(--r);
+    padding: 24px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/jqueryui@1.12.1/jquery-ui.min.js"></script>
+<script src="https://unpkg.com/pivottable@2.23.0/dist/pivot.min.js"></script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo" style="background: var(--blue);">PA</div>
+  <div class="title-block">
+    <b>PIVOT ANALYSIS TOOL</b>
+    <small>Phân tích đa chiều dữ liệu chất lượng / Pivot Table Analysis</small>
+  </div>
+  <div class="actions">
+    <a href="index.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-home"></i> Dashboard</a>
+    <a href="weeklydata.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-calendar-week"></i> Weekly Data</a>
+    <a href="monthlydata.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-calendar-alt"></i> Monthly Data</a>
+  </div>
+</div>
+
+<div class="pivot-container">
+  <!-- Pivot Header (shown only when table is displayed) -->
+  <div class="pivot-header-panel" id="pivot-header-panel" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 15px;">
+    <h3 style="margin: 0; color: var(--tx); font-size: 16px;"><i class="fas fa-chart-pie"></i> Pivot Table Analysis</h3>
+    <button class="btn br" style="font-size:11px;padding:6px 12px;" onclick="exportPivotData()"><i class="fas fa-download"></i> Export Excel</button>
+  </div>
+
+  <div class="pivot-content-card">
+    <!-- Upload Section for Pivot -->
+    <div id="pivot-upload-section" style="background: var(--bg3); border: 2px dashed var(--bd2); padding: 40px 20px; border-radius: 8px; margin-bottom: 0; text-align: center;">
+      <div style="margin-bottom: 24px;">
+        <i class="fas fa-file-excel" style="font-size: 56px; color: var(--blue); margin-bottom: 15px; display: block;"></i>
+        <h3 style="color: var(--tx); margin: 10px 0; font-size: 18px;">Tải Lên File Excel Dữ Liệu</h3>
+        <p style="color: var(--tx2); font-size: 13px; margin: 5px 0;">Chọn file .xlsx hoặc .xls chứa dữ liệu chất lượng gia công đế ngoài để phân tích</p>
+      </div>
+      <button class="btn bb" style="padding: 10px 24px; font-size: 13px;" onclick="document.getElementById('pivotFileInput').click()">
+        <i class="fas fa-cloud-upload-alt"></i> Chọn File Excel
+      </button>
+      <input type="file" id="pivotFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handlePivotFileUpload(this.files[0])">
+      <div id="pivot-file-info" style="margin-top: 20px; font-size: 12px; color: var(--tx3);"></div>
+    </div>
+    
+    <!-- Pivot Table Display -->
+    <div id="pivot-table-ui" style="display: none;"></div>
+  </div>
+</div>
+
+<!-- JavaScript Files -->
+<script src="js/pivot.js"></script>
+
+</body>
+</html>

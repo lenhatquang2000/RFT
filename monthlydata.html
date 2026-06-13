@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Monthly Quality Data Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body {
+    padding-bottom: 40px;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+  }
+  @media(max-width: 1000px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
+  }
+  .info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg3);
+    border: 1px solid var(--bd2);
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+  }
+  .stat-card-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--bd);
+    border-radius: var(--r);
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-card-val {
+    font-size: 20px;
+    font-weight: 900;
+  }
+  .stat-card-lbl {
+    font-size: 9px;
+    color: var(--tx3);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo" style="background: var(--green); color: #000;">MD</div>
+  <div class="title-block">
+    <b>MONTHLY QUALITY DATA</b>
+    <small>Lưu trữ & Quản lý Dữ liệu Chất lượng theo Tháng / Monthly Quality Database</small>
+  </div>
+  <div class="actions">
+    <a href="index.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-home"></i> Dashboard</a>
+    <a href="weeklydata.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-calendar-week"></i> Weekly Data</a>
+    <a href="pivot.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-chart-pie"></i> Pivot Analysis</a>
+  </div>
+</div>
+
+<div class="container">
+  <!-- LEFT COLUMN: UPLOAD & CONTROLS -->
+  <div>
+    <!-- UPLOAD CARD -->
+    <div class="card">
+      <div class="card-hd ch-green"><i class="fas fa-cloud-upload-alt"></i> Tải dữ liệu tháng</div>
+      <div style="padding: 5px;">
+        <div style="background: rgba(0, 196, 90, 0.05); border: 1px solid rgba(0, 196, 90, 0.2); border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 11px; color: var(--tx2); line-height: 1.5;">
+          <i class="fas fa-info-circle" style="color: var(--green);"></i> <strong>Yêu cầu tên file:</strong><br>
+          Phải có dạng <code>mm-yyyy.xlsx</code> (Ví dụ: <code>06-2026.xlsx</code>) để đánh dấu tháng.
+        </div>
+        
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" style="min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <div style="font-size: 32px; margin-bottom: 8px; color: var(--green);"><i class="fas fa-file-excel"></i></div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--tx);">Chọn hoặc kéo thả file</div>
+          <p style="font-size: 9px; margin-top: 4px; color: var(--tx3);">Hỗ trợ file .xlsx, .xls</p>
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+        </div>
+        
+        <div id="upload-log" style="font-size: 9px; color: var(--tx3); padding: 8px 0; line-height: 1.6; max-height: 120px; overflow-y: auto;"></div>
+      </div>
+    </div>
+    
+    <!-- DATABASE STATS -->
+    <div class="card">
+      <div class="card-hd ch-blue"><i class="fas fa-database"></i> Quản lý Database</div>
+      <div style="padding: 5px;">
+        <div style="font-size: 12px; margin-bottom: 10px;">
+          <span>Tổng số tháng lưu trữ: </span><strong id="db-marks-count" style="color: var(--blue);">0</strong>
+        </div>
+        <div style="font-size: 12px; margin-bottom: 15px;">
+          <span>Tổng số dòng dữ liệu: </span><strong id="db-rows-count" style="color: var(--blue);">0</strong>
+        </div>
+        <button class="btn br" style="width: 100%; justify-content: center; padding: 8px; font-size: 11px;" onclick="clearAllData()">
+          <i class="fas fa-trash-alt"></i> Xóa Toàn Bộ Database
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- RIGHT COLUMN: DATA VIEW / COMPARISON -->
+  <div>
+    <!-- VIEW SELECTOR TABS -->
+    <div class="tabs" style="padding: 0 0 10px 0; border-bottom: 1px solid var(--bd); margin-bottom: 15px;">
+      <div class="tab active" id="view-tab-table" onclick="switchDataView('table')" style="padding: 7px 15px;"><i class="fas fa-table"></i> Bảng dữ liệu chi tiết</div>
+      <div class="tab" id="view-tab-compare" onclick="switchDataView('compare')" style="padding: 7px 15px;"><i class="fas fa-chart-bar"></i> Biểu đồ so sánh</div>
+    </div>
+
+    <!-- PREVIEW ZONE (Universal) -->
+    <div id="preview-section" style="display: none; margin-bottom: 20px; background: var(--bg2); border: 1px solid var(--green); border-radius: var(--r); padding: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--bd2); padding-bottom: 8px;">
+        <h3 style="margin: 0; color: var(--green); font-size: 14px;"><i class="fas fa-eye"></i> XEM TRƯỚC DỮ LIỆU TẢI LÊN</h3>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn bg" onclick="savePreviewData()"><i class="fas fa-save"></i> Lưu vào Database</button>
+          <button class="btn bx" onclick="cancelPreviewData()"><i class="fas fa-times"></i> Hủy</button>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: var(--tx2); margin-bottom: 10px;">
+        <span>File: </span><strong id="preview-filename" style="color: var(--tx);"></strong> | 
+        <span>Nhãn đánh dấu (Marks): </span><strong id="preview-marks" style="color: var(--green);"></strong> | 
+        <span>Số dòng dữ liệu: </span><strong id="preview-rows-count" style="color: var(--blue);"></strong>
+      </div>
+      <div class="tbl-wrap" style="max-height: 250px;">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>Production line</th>
+              <th style="text-align: right;">RFT</th>
+              <th style="text-align: right;">Destroy rate</th>
+              <th style="text-align: right;">Bonding pass rate</th>
+            </tr>
+          </thead>
+          <tbody id="preview-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONTAINER 1: TABLE VIEW -->
+    <div id="table-view-container">
+      <!-- CONTROLS ROW -->
+      <div class="info-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--tx2);">Chọn Tháng (Marks):</label>
+          <select id="marks-filter" onchange="loadDataByMark()" style="background: var(--bg2); border: 1px solid var(--bd2); color: var(--tx); padding: 5px 10px; border-radius: 5px; font-size: 11px;">
+            <option value="">-- Tất cả dữ liệu --</option>
+          </select>
+        </div>
+        <div id="mark-actions" style="display: none;">
+          <button class="btn br" style="padding: 4px 10px; font-size: 10px;" onclick="deleteSelectedMark()">
+            <i class="fas fa-trash"></i> Xóa dữ liệu tháng đang chọn
+          </button>
+        </div>
+      </div>
+      
+      <!-- SUMMARY CARDS -->
+      <div class="stat-card-row">
+        <div class="stat-card" style="border-top: 3px solid var(--blue);">
+          <div class="stat-card-val" id="sum-lines">0</div>
+          <div class="stat-card-lbl">Số Dây Chuyền (Total Lines)</div>
+        </div>
+        <div class="stat-card" style="border-top: 3px solid var(--red);">
+          <div class="stat-card-val" id="avg-destroy" style="color: var(--red);">0.00%</div>
+          <div class="stat-card-lbl">Tỷ Lệ Hủy TB (Avg Destroy Rate)</div>
+        </div>
+        <div class="stat-card" style="border-top: 3px solid var(--green);">
+          <div class="stat-card-val" id="avg-rft" style="color: var(--green);">0.00%</div>
+          <div class="stat-card-lbl">Tỷ Lệ RFT TB (Avg RFT Rate)</div>
+        </div>
+      </div>
+      
+      <!-- TABLE VIEW -->
+      <div class="card">
+        <div class="card-hd ch-green" style="display: flex; justify-content: space-between; align-items: center;">
+          <span><i class="fas fa-table"></i> Danh Sách Chi Tiết Dữ Liệu</span>
+          <span id="data-view-count" style="font-size: 10px; color: var(--tx3);">0 dòng</span>
+        </div>
+        <div style="padding: 5px; margin-top: 5px;">
+          <div class="tbl-wrap" style="max-height: 500px;">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th style="min-width: 100px;">Tháng (Marks)</th>
+                  <th>Production line</th>
+                  <th style="text-align: right;">RFT</th>
+                  <th style="text-align: right;">Destroy rate</th>
+                  <th style="text-align: right;">Bonding pass rate</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="data-table-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--tx3); padding: 30px;">Không có dữ liệu trong tháng đã chọn. Vui lòng tải dữ liệu lên.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTAINER 2: COMPARE VIEW -->
+    <div id="compare-view-container" style="display: none;">
+      <!-- COMPARE SELECTION CARD -->
+      <div class="card">
+        <div class="card-hd ch-orange"><i class="fas fa-tasks"></i> Chọn các nhãn (Marks) để so sánh</div>
+        <div style="padding: 10px;">
+          <div style="font-size: 11px; color: var(--tx2); margin-bottom: 10px;">Vui lòng tích chọn từ 2 tháng trở lên để so sánh hiệu suất giữa các tháng:</div>
+          <div id="compare-marks-checkboxes" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <!-- Checkboxes populated dynamically -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- CHARTS SECTION -->
+      <div id="compare-charts-placeholder" style="background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 50px; text-align: center; color: var(--tx3);">
+        <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px; display: block; color: var(--tx3);"></i>
+        Vui lòng tích chọn từ 2 nhãn (marks) trở lên để hiển thị biểu đồ so sánh.
+      </div>
+      
+      <div id="compare-charts-wrapper" style="display: none; display: flex; flex-direction: column; gap: 20px;">
+        <!-- OVERALL COMPARISON CHART -->
+        <div class="card">
+          <div class="card-hd ch-blue"><i class="fas fa-chart-line"></i> So sánh tổng quan các tháng (Trung bình cộng)</div>
+          <div style="padding: 10px; position: relative; height: 300px;">
+            <canvas id="chart-overall-summary"></canvas>
+          </div>
+        </div>
+        
+        <!-- RFT CHART -->
+        <div class="card">
+          <div class="card-hd ch-green"><i class="fas fa-chart-bar"></i> So sánh RFT giữa các Dây chuyền sản xuất (%)</div>
+          <div style="padding: 10px; position: relative; height: 320px;">
+            <canvas id="chart-rft-compare"></canvas>
+          </div>
+        </div>
+        
+        <!-- DESTROY RATE CHART -->
+        <div class="card">
+          <div class="card-hd ch-red"><i class="fas fa-chart-bar"></i> So sánh Destroy Rate giữa các Dây chuyền sản xuất (%)</div>
+          <div style="padding: 10px; position: relative; height: 320px;">
+            <canvas id="chart-destroy-compare"></canvas>
+          </div>
+        </div>
+        
+        <!-- BONDING PASS RATE CHART -->
+        <div class="card">
+          <div class="card-hd ch-blue"><i class="fas fa-chart-bar"></i> So sánh Bonding Pass Rate giữa các Dây chuyền sản xuất (%)</div>
+          <div style="padding: 10px; position: relative; height: 320px;">
+            <canvas id="chart-bonding-compare"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // IndexedDB Configuration
+  const DB_NAME = 'MonthlyQualityDB';
+  const STORE_NAME = 'monthly_data';
+  const DB_VERSION = 1;
+  let db = null;
+
+  // Temporary Preview Storage
+  let tempParsedData = null;
+  let tempMarks = '';
+
+  // Chart instances
+  let chartOverall = null;
+  let chartRft = null;
+  let chartDestroy = null;
+  let chartBonding = null;
+
+  // Initialize DB
+  function initDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onerror = (e) => {
+        console.error('Database error:', e.target.error);
+        reject(e.target.error);
+      };
+      
+      request.onsuccess = (e) => {
+        db = e.target.result;
+        resolve(db);
+      };
+      
+      request.onupgradeneeded = (e) => {
+        const database = e.target.result;
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
+          const store = database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          store.createIndex('marks', 'marks', { unique: false });
+        }
+      };
+    });
+  }
+
+  // Setup Event Listeners
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await initDB();
+      setupUploadEvents();
+      await updateDatabaseStats();
+      await populateMarksFilter();
+      await loadDataByMark();
+    } catch (err) {
+      Swal.fire('❌ Lỗi', 'Không thể khởi tạo cơ sở dữ liệu: ' + err.message, 'error');
+    }
+  });
+
+  function setupUploadEvents() {
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', e => {
+      if (e.target.files[0]) handleExcelUpload(e.target.files[0]);
+    });
+    
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      zone.classList.add('drag');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag');
+      if (e.dataTransfer.files[0]) handleExcelUpload(e.dataTransfer.files[0]);
+    });
+  }
+
+  // Helper to parse percentages safely
+  function parsePercentage(val) {
+    if (typeof val === 'number') {
+      if (val <= 1 && val > 0) {
+        return (val * 100).toFixed(2);
+      }
+      return val.toFixed(2);
+    }
+    if (typeof val === 'string') {
+      const clean = val.replace('%', '').trim();
+      const parsed = parseFloat(clean);
+      if (isNaN(parsed)) return '0.00';
+      return parsed.toFixed(2);
+    }
+    return '0.00';
+  }
+
+  // Parse and display Preview
+  function handleExcelUpload(file) {
+    const filename = file.name;
+    const regex = /^(\d{2}-\d{4})\.(xlsx|xls)$/i;
+    const match = filename.match(regex);
+    
+    if (!match) {
+      Swal.fire({
+        title: '⚠️ Định dạng file không khớp',
+        html: `Tên file phải có định dạng <b>mm-yyyy.xlsx</b> (Ví dụ: <code>06-2026.xlsx</code>)<br><br>Nhận diện file: <code>${filename}</code>`,
+        icon: 'warning',
+        confirmButtonText: 'Đóng'
+      });
+      return;
+    }
+    
+    const marks = match[1];
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        logMessage(`Đang đọc file "${filename}" để xem trước...`);
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        
+        if (json.length === 0) {
+          throw new Error("Không có dữ liệu trong sheet đầu tiên!");
+        }
+        
+        const parsedData = [];
+        
+        json.forEach(r => {
+          const prodLine = r['Production line'] || r['production line'] || r['Production Line'] || r['Line'] || '';
+          if (!prodLine || String(prodLine).trim() === '' || String(prodLine).toLowerCase().includes('total')) return;
+
+          const rft = parsePercentage(r['RFT'] || r['rft'] || 0);
+          const destroyRate = parsePercentage(r['Destroy rate'] || r['destroy rate'] || r['Destroy Rate'] || 0);
+          const bondingPassRate = parsePercentage(r['Bonding pass rate'] || r['bonding pass rate'] || r['Bonding Pass Rate'] || 0);
+
+          const row = {
+            marks: marks,
+            productionLine: String(prodLine).trim(),
+            rft: rft,
+            destroyRate: destroyRate,
+            bondingPassRate: bondingPassRate
+          };
+          
+          parsedData.push(row);
+        });
+        
+        if (parsedData.length === 0) {
+          throw new Error("Không thể phân tích dữ liệu hợp lệ (Production line, RFT...) từ Excel!");
+        }
+
+        tempParsedData = parsedData;
+        tempMarks = marks;
+
+        document.getElementById('preview-filename').textContent = filename;
+        document.getElementById('preview-marks').textContent = marks;
+        document.getElementById('preview-rows-count').textContent = parsedData.length;
+        
+        const previewBody = document.getElementById('preview-table-body');
+        let html = '';
+        parsedData.forEach(r => {
+          const rftVal = parseFloat(r.rft) || 0;
+          const rftColor = rftVal >= 70 ? '#00C45A' : rftVal >= 65 ? '#FF8C00' : '#E03030';
+          html += `
+            <tr>
+              <td><b>${r.productionLine}</b></td>
+              <td style="text-align: right; color: ${rftColor}; font-weight: 700;">${rftVal.toFixed(2)}%</td>
+              <td style="text-align: right;">${parseFloat(r.destroyRate).toFixed(2)}%</td>
+              <td style="text-align: right;">${parseFloat(r.bondingPassRate).toFixed(2)}%</td>
+            </tr>
+          `;
+        });
+        previewBody.innerHTML = html;
+        
+        document.getElementById('preview-section').style.display = 'block';
+        document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+        
+        logMessage(`Đã hiển thị bản xem trước cho ${parsedData.length} records. Vui lòng bấm "Lưu vào Database" để lưu lại.`);
+        
+      } catch (err) {
+        logMessage(`❌ Lỗi xem trước: ${err.message}`);
+        Swal.fire('❌ Lỗi', err.message, 'error');
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  // Cancel Preview
+  function cancelPreviewData() {
+    tempParsedData = null;
+    tempMarks = '';
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('fileInput').value = '';
+    logMessage('Đã hủy bỏ xem trước dữ liệu.');
+  }
+
+  // Save parsed preview data to DB
+  async function savePreviewData() {
+    if (!tempParsedData || !tempMarks) return;
+
+    try {
+      const exists = await checkMarksExists(tempMarks);
+      
+      if (exists) {
+        const result = await Swal.fire({
+          title: '⚠️ Trùng nhãn dữ liệu',
+          html: `Dữ liệu tháng <b>${tempMarks}</b> đã tồn tại trên Database.<br><br>Bạn có muốn <b>ghi đè (overwrite)</b> để cập nhật dữ liệu mới này không?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#00C45A',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Ghi đè (Cập nhật)',
+          cancelButtonText: 'Hủy'
+        });
+        
+        if (!result.isConfirmed) {
+          logMessage('Đã hủy thao tác ghi đè.');
+          return;
+        }
+      }
+
+      logMessage(`Đang lưu ${tempParsedData.length} dòng dữ liệu của tháng ${tempMarks} vào IndexedDB...`);
+      await saveToIndexedDB(tempParsedData, tempMarks);
+      logMessage(`✅ Đã lưu dữ liệu tháng ${tempMarks} thành công.`);
+      
+      Swal.fire({
+        title: '✅ Lưu thành công',
+        html: `Đã lưu <b>${tempParsedData.length}</b> dòng dữ liệu cho tháng <b>${tempMarks}</b> vào cơ sở dữ liệu.`,
+        icon: 'success'
+      });
+
+      tempParsedData = null;
+      const marksSaved = tempMarks;
+      tempMarks = '';
+      document.getElementById('preview-section').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+
+      await updateDatabaseStats();
+      await populateMarksFilter();
+      
+      const activeTab = document.querySelector('.tab.active').id;
+      if (activeTab === 'view-tab-table') {
+        document.getElementById('marks-filter').value = marksSaved;
+        await loadDataByMark();
+      } else {
+        await initCompareCheckboxes();
+      }
+      
+    } catch (err) {
+      logMessage(`❌ Lỗi lưu dữ liệu: ${err.message}`);
+      Swal.fire('❌ Lỗi', 'Không thể lưu vào database: ' + err.message, 'error');
+    }
+  }
+
+  // Check if mark already exists in DB
+  function checkMarksExists(marks) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const index = store.index('marks');
+      const countReq = index.count(IDBKeyRange.only(marks));
+      
+      countReq.onsuccess = () => resolve(countReq.result > 0);
+      countReq.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  // Save to IndexedDB (with overwrite)
+  function saveToIndexedDB(data, marks) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const index = store.index('marks');
+      const request = index.openCursor(IDBKeyRange.only(marks));
+      
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          store.delete(cursor.primaryKey);
+          cursor.continue();
+        } else {
+          let completed = 0;
+          data.forEach(item => {
+            const addReq = store.add(item);
+            addReq.onsuccess = () => {
+              completed++;
+              if (completed === data.length) resolve();
+            };
+            addReq.onerror = (err) => reject(err.target.error);
+          });
+        }
+      };
+      
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  // Populate filter dropdown
+  function populateMarksFilter() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const index = store.index('marks');
+      const marksSet = new Set();
+      
+      index.openCursor().onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          marksSet.add(cursor.key);
+          cursor.continue();
+        } else {
+          const select = document.getElementById('marks-filter');
+          const currentVal = select.value;
+          
+          select.innerHTML = '<option value="">-- Tất cả dữ liệu --</option>';
+          
+          const sortedMarks = Array.from(marksSet).sort().reverse();
+          sortedMarks.forEach(mark => {
+            const opt = document.createElement('option');
+            opt.value = mark;
+            opt.textContent = `Tháng: ${mark}`;
+            select.appendChild(opt);
+          });
+          
+          if (Array.from(marksSet).includes(currentVal)) {
+            select.value = currentVal;
+          }
+          resolve();
+        }
+      };
+    });
+  }
+
+  // Load and Render Data by selected mark
+  function loadDataByMark() {
+    return new Promise((resolve, reject) => {
+      const markFilter = document.getElementById('marks-filter').value;
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const rows = [];
+      
+      document.getElementById('mark-actions').style.display = markFilter ? 'block' : 'none';
+      
+      let request;
+      if (markFilter) {
+        const index = store.index('marks');
+        request = index.openCursor(IDBKeyRange.only(markFilter));
+      } else {
+        request = store.openCursor();
+      }
+      
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          rows.push(cursor.value);
+          cursor.continue();
+        } else {
+          renderTableRows(rows);
+          calculateSummaryStats(rows);
+          resolve();
+        }
+      };
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  // Render Table
+  function renderTableRows(rows) {
+    const tbody = document.getElementById('data-table-body');
+    const viewCount = document.getElementById('data-view-count');
+    viewCount.textContent = `${rows.length} dòng`;
+    
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--tx3); padding: 30px;">Không có dữ liệu. Vui lòng tải file Excel lên.</td></tr>`;
+      return;
+    }
+    
+    let html = '';
+    rows.forEach(r => {
+      const rftVal = parseFloat(r.rft) || 0;
+      const rftColor = rftVal >= 70 ? '#00C45A' : rftVal >= 65 ? '#FF8C00' : '#E03030';
+      
+      html += `
+        <tr>
+          <td><span style="background: rgba(0,196,90,0.15); color: var(--green); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 10px;">${r.marks}</span></td>
+          <td><b>${r.productionLine}</b></td>
+          <td style="text-align: right; color: ${rftColor}; font-weight: 700;">${rftVal.toFixed(2)}%</td>
+          <td style="text-align: right; color: var(--tx2);">${parseFloat(r.destroyRate).toFixed(2)}%</td>
+          <td style="text-align: right; color: var(--tx2);">${parseFloat(r.bondingPassRate).toFixed(2)}%</td>
+          <td>
+            <button class="btn br" style="padding: 2px 6px; font-size: 9px;" onclick="deleteRow(${r.id})">
+              <i class="fas fa-trash-alt"></i> Xóa
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }
+
+  // Calculate Summary Statistics
+  function calculateSummaryStats(rows) {
+    const linesCount = rows.length;
+    let sumRft = 0;
+    let sumDestroy = 0;
+    
+    rows.forEach(r => {
+      sumRft += parseFloat(r.rft) || 0;
+      sumDestroy += parseFloat(r.destroyRate) || 0;
+    });
+    
+    const avgRft = linesCount > 0 ? (sumRft / linesCount) : 0;
+    const avgDestroy = linesCount > 0 ? (sumDestroy / linesCount) : 0;
+    
+    document.getElementById('sum-lines').textContent = linesCount.toLocaleString();
+    document.getElementById('avg-destroy').textContent = avgDestroy.toFixed(2) + '%';
+    document.getElementById('avg-rft').textContent = avgRft.toFixed(2) + '%';
+  }
+
+  // Update DB metadata counts
+  function updateDatabaseStats() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const countReq = store.count();
+      
+      countReq.onsuccess = () => {
+        document.getElementById('db-rows-count').textContent = countReq.result;
+        
+        const marksSet = new Set();
+        store.openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            marksSet.add(cursor.value.marks);
+            cursor.continue();
+          } else {
+            document.getElementById('db-marks-count').textContent = marksSet.size;
+            resolve();
+          }
+        };
+      };
+      
+      countReq.onerror = (err) => reject(err.target.error);
+    });
+  }
+
+  // View Switcher (Table vs Compare)
+  function switchDataView(view) {
+    const tabTable = document.getElementById('view-tab-table');
+    const tabCompare = document.getElementById('view-tab-compare');
+    const containerTable = document.getElementById('table-view-container');
+    const containerCompare = document.getElementById('compare-view-container');
+    
+    if (view === 'table') {
+      tabTable.classList.add('active');
+      tabCompare.classList.remove('active');
+      containerTable.style.display = 'block';
+      containerCompare.style.display = 'none';
+      loadDataByMark();
+    } else {
+      tabTable.classList.remove('active');
+      tabCompare.classList.add('active');
+      containerTable.style.display = 'none';
+      containerCompare.style.display = 'block';
+      initCompareCheckboxes();
+    }
+  }
+
+  // Initialize checkboxes list in Comparison tab
+  function initCompareCheckboxes() {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const index = store.index('marks');
+      const marksSet = new Set();
+      
+      index.openCursor().onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+          marksSet.add(cursor.key);
+          cursor.continue();
+        } else {
+          const container = document.getElementById('compare-marks-checkboxes');
+          container.innerHTML = '';
+          
+          if (marksSet.size === 0) {
+            container.innerHTML = '<span style="color: var(--tx3); font-style: italic; padding: 10px 0; display: block;">Không có dữ liệu trong Database để so sánh.</span>';
+            document.getElementById('compare-charts-placeholder').style.display = 'block';
+            document.getElementById('compare-charts-wrapper').style.display = 'none';
+            destroyCharts();
+            resolve();
+            return;
+          }
+          
+          const sortedMarks = Array.from(marksSet).sort().reverse();
+          sortedMarks.forEach((mark, index) => {
+            const label = document.createElement('label');
+            label.style.display = 'inline-flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '6px';
+            label.style.cursor = 'pointer';
+            label.style.background = 'var(--bg3)';
+            label.style.border = '1px solid var(--bd2)';
+            label.style.padding = '6px 12px';
+            label.style.borderRadius = '5px';
+            label.style.fontSize = '11px';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = mark;
+            checkbox.name = 'compare-mark-item';
+            if (index < 2) checkbox.checked = true; // Auto select first 2
+            
+            checkbox.addEventListener('change', updateComparisonCharts);
+            
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(mark));
+            container.appendChild(label);
+          });
+          
+          updateComparisonCharts();
+          resolve();
+        }
+      };
+      
+      request.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  // Destroy all active charts safely
+  function destroyCharts() {
+    if (chartOverall) { chartOverall.destroy(); chartOverall = null; }
+    if (chartRft) { chartRft.destroy(); chartRft = null; }
+    if (chartDestroy) { chartDestroy.destroy(); chartDestroy = null; }
+    if (chartBonding) { chartBonding.destroy(); chartBonding = null; }
+  }
+
+  // Fetch multiple marks from DB
+  function fetchMultipleMarksData(marks) {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const index = store.index('marks');
+      const allRows = [];
+      
+      let completed = 0;
+      marks.forEach(mark => {
+        const request = index.openCursor(IDBKeyRange.only(mark));
+        request.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            allRows.push(cursor.value);
+            cursor.continue();
+          } else {
+            completed++;
+            if (completed === marks.length) {
+              resolve(allRows);
+            }
+          }
+        };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    });
+  }
+
+  // Re-draw Comparison charts
+  async function updateComparisonCharts() {
+    const checkedBoxes = document.querySelectorAll('input[name="compare-mark-item"]:checked');
+    const selectedMarks = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    const placeholder = document.getElementById('compare-charts-placeholder');
+    const wrapper = document.getElementById('compare-charts-wrapper');
+    
+    if (selectedMarks.length < 2) {
+      placeholder.style.display = 'block';
+      wrapper.style.display = 'none';
+      destroyCharts();
+      return;
+    }
+    
+    placeholder.style.display = 'none';
+    wrapper.style.display = 'flex';
+    
+    try {
+      const allData = await fetchMultipleMarksData(selectedMarks);
+      
+      // Calculate overall averages by mark
+      const markAverages = {};
+      selectedMarks.forEach(mark => {
+        const markRows = allData.filter(d => d.marks === mark);
+        const count = markRows.length;
+        let sumRft = 0, sumDestroy = 0, sumBonding = 0;
+        
+        markRows.forEach(r => {
+          sumRft += parseFloat(r.rft) || 0;
+          sumDestroy += parseFloat(r.destroyRate) || 0;
+          sumBonding += parseFloat(r.bondingPassRate) || 0;
+        });
+        
+        markAverages[mark] = {
+          rft: count > 0 ? (sumRft / count) : 0,
+          destroy: count > 0 ? (sumDestroy / count) : 0,
+          bonding: count > 0 ? (sumBonding / count) : 0
+        };
+      });
+      
+      // Get all unique production lines present in the loaded dataset
+      const prodLinesSet = new Set();
+      allData.forEach(d => {
+        if (d.productionLine) prodLinesSet.add(d.productionLine);
+      });
+      const prodLines = Array.from(prodLinesSet).sort();
+      
+      destroyCharts();
+      
+      // Vibrant Palette matching Dark Mode
+      const colors = [
+        { fill: 'rgba(0, 196, 90, 0.7)', border: '#00C45A' },  // Green
+        { fill: 'rgba(58, 123, 213, 0.7)', border: '#3A7BD5' }, // Blue
+        { fill: 'rgba(255, 140, 0, 0.7)', border: '#FF8C00' }, // Orange
+        { fill: 'rgba(224, 48, 48, 0.7)', border: '#E03030' }, // Red
+        { fill: 'rgba(155, 93, 229, 0.7)', border: '#9B5DE5' }, // Purple
+        { fill: 'rgba(0, 245, 212, 0.7)', border: '#00F5D4' }  // Teal
+      ];
+      
+      // Helper to generate chart datasets by metric
+      const generateGroupedDatasets = (metricKey) => {
+        return selectedMarks.map((mark, i) => {
+          const colorObj = colors[i % colors.length];
+          const dataPoints = prodLines.map(line => {
+            const row = allData.find(d => d.marks === mark && d.productionLine === line);
+            return row ? parseFloat(row[metricKey]) : null;
+          });
+          
+          return {
+            label: `Tháng: ${mark}`,
+            data: dataPoints,
+            backgroundColor: colorObj.fill,
+            borderColor: colorObj.border,
+            borderWidth: 1
+          };
+        });
+      };
+      
+      // 1. Render Overall Summary averages
+      const overallCtx = document.getElementById('chart-overall-summary').getContext('2d');
+      chartOverall = new Chart(overallCtx, {
+        type: 'bar',
+        data: {
+          labels: selectedMarks,
+          datasets: [
+            {
+              label: 'Avg RFT (%)',
+              data: selectedMarks.map(m => markAverages[m].rft),
+              backgroundColor: 'rgba(0, 196, 90, 0.7)',
+              borderColor: '#00C45A',
+              borderWidth: 1
+            },
+            {
+              label: 'Avg Destroy Rate (%)',
+              data: selectedMarks.map(m => markAverages[m].destroy),
+              backgroundColor: 'rgba(224, 48, 48, 0.7)',
+              borderColor: '#E03030',
+              borderWidth: 1
+            },
+            {
+              label: 'Avg Bonding Pass Rate (%)',
+              data: selectedMarks.map(m => markAverages[m].bonding),
+              backgroundColor: 'rgba(58, 123, 213, 0.7)',
+              borderColor: '#3A7BD5',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#F0F4FF', font: { family: 'Noto Sans, sans-serif' } } }
+          },
+          scales: {
+            x: { grid: { color: '#1E2A4A' }, ticks: { color: 'rgba(240,244,255,.65)' } },
+            y: { 
+              grid: { color: '#1E2A4A' }, 
+              ticks: { 
+                color: 'rgba(240,244,255,.65)',
+                callback: function(v) { return v.toFixed(1) + '%'; }
+              } 
+            }
+          }
+        }
+      });
+      
+      // 2. Render RFT Comparison
+      const rftCtx = document.getElementById('chart-rft-compare').getContext('2d');
+      chartRft = new Chart(rftCtx, {
+        type: 'bar',
+        data: {
+          labels: prodLines,
+          datasets: generateGroupedDatasets('rft')
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#F0F4FF', font: { family: 'Noto Sans, sans-serif' } } }
+          },
+          scales: {
+            x: { grid: { color: '#1E2A4A' }, ticks: { color: 'rgba(240,244,255,.65)' } },
+            y: { 
+              min: 0, 
+              max: 100, 
+              grid: { color: '#1E2A4A' }, 
+              ticks: { 
+                color: 'rgba(240,244,255,.65)',
+                callback: function(v) { return v + '%'; }
+              } 
+            }
+          }
+        }
+      });
+      
+      // 3. Render Destroy Rate Comparison
+      const destroyCtx = document.getElementById('chart-destroy-compare').getContext('2d');
+      chartDestroy = new Chart(destroyCtx, {
+        type: 'bar',
+        data: {
+          labels: prodLines,
+          datasets: generateGroupedDatasets('destroyRate')
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#F0F4FF', font: { family: 'Noto Sans, sans-serif' } } }
+          },
+          scales: {
+            x: { grid: { color: '#1E2A4A' }, ticks: { color: 'rgba(240,244,255,.65)' } },
+            y: { 
+              grid: { color: '#1E2A4A' }, 
+              ticks: { 
+                color: 'rgba(240,244,255,.65)',
+                callback: function(v) { return v.toFixed(2) + '%'; }
+              } 
+            }
+          }
+        }
+      });
+      
+      // 4. Render Bonding Pass Rate Comparison
+      const bondingCtx = document.getElementById('chart-bonding-compare').getContext('2d');
+      chartBonding = new Chart(bondingCtx, {
+        type: 'bar',
+        data: {
+          labels: prodLines,
+          datasets: generateGroupedDatasets('bondingPassRate')
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#F0F4FF', font: { family: 'Noto Sans, sans-serif' } } }
+          },
+          scales: {
+            x: { grid: { color: '#1E2A4A' }, ticks: { color: 'rgba(240,244,255,.65)' } },
+            y: { 
+              min: 0, 
+              max: 100, 
+              grid: { color: '#1E2A4A' }, 
+              ticks: { 
+                color: 'rgba(240,244,255,.65)',
+                callback: function(v) { return v + '%'; }
+              } 
+            }
+          }
+        }
+      });
+      
+    } catch (err) {
+      console.error(err);
+      Swal.fire('❌ Lỗi', 'Lỗi hiển thị biểu đồ so sánh: ' + err.message, 'error');
+    }
+  }
+
+  // Delete single record
+  async function deleteRow(id) {
+    const result = await Swal.fire({
+      title: 'Xóa dòng dữ liệu?',
+      text: "Hành động này sẽ không thể khôi phục!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#E03030',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy'
+    });
+    
+    if (result.isConfirmed) {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const req = store.delete(id);
+      
+      req.onsuccess = async () => {
+        Swal.fire('Đã xóa!', 'Dòng dữ liệu đã được xóa khỏi database.', 'success');
+        await updateDatabaseStats();
+        await populateMarksFilter();
+        await loadDataByMark();
+      };
+    }
+  }
+
+  // Delete selected Mark (month)
+  async function deleteSelectedMark() {
+    const mark = document.getElementById('marks-filter').value;
+    if (!mark) return;
+    
+    const result = await Swal.fire({
+      title: `Xóa dữ liệu tháng ${mark}?`,
+      text: `Toàn bộ dữ liệu của tháng này sẽ bị xóa vĩnh viễn khỏi Database!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#E03030',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Đồng ý xóa',
+      cancelButtonText: 'Hủy'
+    });
+    
+    if (result.isConfirmed) {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const index = store.index('marks');
+      const request = index.openCursor(IDBKeyRange.only(mark));
+      
+      request.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          store.delete(cursor.primaryKey);
+          cursor.continue();
+        } else {
+          Swal.fire('Đã xóa thành công!', `Dữ liệu tháng ${mark} đã được xóa sạch.`, 'success');
+          document.getElementById('marks-filter').value = '';
+          updateDatabaseStats();
+          populateMarksFilter().then(() => loadDataByMark());
+        }
+      };
+    }
+  }
+
+  // Clear all database
+  async function clearAllData() {
+    const result = await Swal.fire({
+      title: 'Xóa TOÀN BỘ Database?',
+      text: "Lưu ý: Tất cả dữ liệu của TẤT CẢ các tháng sẽ bị xóa sạch hoàn toàn và không thể phục hồi!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#E03030',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Xóa Toàn Bộ',
+      cancelButtonText: 'Hủy'
+    });
+    
+    if (result.isConfirmed) {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const req = store.clear();
+      
+      req.onsuccess = async () => {
+        Swal.fire('Thành công!', 'Cơ sở dữ liệu đã được dọn sạch.', 'success');
+        document.getElementById('marks-filter').value = '';
+        await updateDatabaseStats();
+        await populateMarksFilter();
+        await loadDataByMark();
+      };
+    }
+  }
+
+  // Logging helpers
+  function logMessage(msg) {
+    const el = document.getElementById('upload-log');
+    if (el) {
+      const timestamp = new Date().toLocaleTimeString();
+      el.innerHTML = `<span>[${timestamp}] ${msg}</span><br>${el.innerHTML}`;
+    }
+  }
+</script>
+
+</body>
+</html>

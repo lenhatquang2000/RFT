@@ -90,6 +90,8 @@ function handlePivotFileUpload(file) {
       // Ẩn upload, hiển thị pivot
       document.getElementById('pivot-upload-section').style.display = 'none';
       document.getElementById('pivot-table-ui').style.display = 'block';
+      const headerPanel = document.getElementById('pivot-header-panel');
+      if (headerPanel) headerPanel.style.display = 'flex';
 
       // Tạo Pivot Table
       createIndependentPivotTable();

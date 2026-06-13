@@ -8,15 +8,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<link rel="stylesheet" href="https://unpkg.com/pivottable@2.23.0/dist/pivot.min.css">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://unpkg.com/jqueryui@1.12.1/jquery-ui.min.js"></script>
-<script src="https://unpkg.com/pivottable@2.23.0/dist/pivot.min.js"></script>
 </head>
 <body>
 
@@ -32,6 +29,8 @@
       <i class="fas fa-folder"></i> Upload Excel
       <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
     </label>
+    <a href="weeklydata.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-calendar-week"></i> Weekly Data</a>
+    <a href="monthlydata.html" class="btn bx" style="text-decoration: none;"><i class="fas fa-calendar-alt"></i> Monthly Data</a>
     <div class="lang-switcher">
       <button class="lang-btn active" id="lang-vi" onclick="setLang('vi')"><i class="fas fa-language"></i> VI</button>
       <button class="lang-btn" id="lang-zh" onclick="setLang('zh')"><i class="fas fa-language"></i> 中文</button>
@@ -64,7 +63,6 @@
 <div class="tabs">
   <div class="tab active" id="tab-dashboard" onclick="showTab('tab-dashboard')"><i class="fas fa-chart-line"></i> Dashboard</div>
   <div class="tab" id="tab-data" onclick="showTab('tab-data')"><i class="fas fa-table"></i> Dữ liệu</div>
-  <div class="tab" id="tab-pivot" onclick="showTab('tab-pivot')"><i class="fas fa-chart-pie"></i> Pivot Analysis</div>
   <div class="tab" id="tab-mobile" onclick="showTab('tab-mobile')"><i class="fas fa-mobile-alt"></i> Giao diện Mobile</div>
   <div class="tab" id="tab-upload" onclick="showTab('tab-upload')"><i class="fas fa-cloud-upload-alt"></i> Upload / Nhập liệu</div>
 </div>
@@ -121,31 +119,6 @@
   </div>
 </div>
 
-<!-- PIVOT PANEL -->
-<div class="panel" id="panel-pivot" style="padding: 0;">
-  <div style="padding: 15px; background: #f5f7fa; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-    <h3 style="margin: 0; color: #333; font-size: 16px;"><i class="fas fa-chart-pie"></i> Pivot Table Analysis</h3>
-    <button class="btn br" style="font-size:10px;padding:4px 10px;" onclick="exportPivotData()"><i class="fas fa-download"></i> Export</button>
-  </div>
-  <div style="padding: 15px;">
-    <!-- Upload Section for Pivot -->
-    <div id="pivot-upload-section" style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-      <div style="margin-bottom: 20px;">
-        <i class="fas fa-file-excel" style="font-size: 48px; color: #667eea; margin-bottom: 10px; display: block;"></i>
-        <h3 style="color: #333; margin: 10px 0; font-size: 16px;">Upload file Excel để Pivot Analysis</h3>
-        <p style="color: #666; font-size: 13px; margin: 5px 0;">Chọn file .xlsx hoặc .xls chứa dữ liệu chất lượng</p>
-      </div>
-      <button class="btn bg" style="padding: 10px 20px; font-size: 14px;" onclick="document.getElementById('pivotFileInput').click()">
-        <i class="fas fa-upload"></i> Chọn File
-      </button>
-      <input type="file" id="pivotFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handlePivotFileUpload(this.files[0])">
-      <div id="pivot-file-info" style="margin-top: 15px; font-size: 12px; color: #999;"></div>
-    </div>
-    
-    <!-- Pivot Table Display -->
-    <div id="pivot-table-ui" style="display: none;"></div>
-  </div>
-</div>
 
 <!-- MOBILE PANEL -->
 <div class="panel" id="panel-mobile">
@@ -274,7 +247,6 @@
 <script src="js/upload.js"></script>
 <script src="js/render.js"></script>
 <script src="js/export.js"></script>
-<script src="js/pivot.js"></script>
 <script src="js/mobile.js"></script>
 <script src="js/main.js"></script>
 

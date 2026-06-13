@@ -749,7 +749,8 @@
       const index = store.index('marks');
       const marksSet = new Set();
       
-      index.openCursor().onsuccess = (event) => {
+      const request = index.openCursor();
+      request.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
           marksSet.add(cursor.key);
